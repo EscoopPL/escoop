@@ -12,6 +12,7 @@ typedef struct {
 	} logLevel;
 	bool showTrace;
 	bool showDebug;
+	bool exitOnFatal;
 } ESCloggerFlags;
 
 class ESClogger {
@@ -22,6 +23,7 @@ class ESClogger {
 		void logInfo(std::string msg);
 		void logWarn(std::string msg);
 		void logError(std::string msg);
+		void logFatalBypass(std::string msg);
 		void logFatal(std::string msg);
 	private:
 		ESCloggerFlags flags;

@@ -11,6 +11,10 @@ class ESClexer {
 		ESCtoken nextToken();
 	private:
 		std::string source;
-		int current;
-		int previous;
+		int line = 1;
+		int lineStart = 0;
+		int current = 0;
+		int start = 0;
+		ESCtoken makeToken(ESCtoken::TokenType type);
+		
 };

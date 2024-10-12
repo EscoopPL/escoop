@@ -2,72 +2,83 @@
 
 #include "common.hpp"
 
-typedef struct {
-	enum {
-		// Data Types
-		STRING,
-		INT,
-		FLOAT,
-		BOOL,
-		CHAR,
-		ARRAY,
+class ESCtoken {
+	public:
+		typedef enum {
+			// Data Types
+			STRING,
+			INT,
+			FLOAT,
+			BOOL,
+			CHAR,
+			ARRAY,
+		
+			// Keywords
+			CLASS,
+			INTERFACE,
+			RECORD,
+			UNION,
+			VARIANT,
+			RUNFILE,
+			IMPORT,
+			VIRTUAL,
+			IF,
+			IDENTIFIER_KEY,
+			CASE,
+			SWITCH,
+			WHILE,
+			FOR,
+			FOREACH,
+			AS,
+			FUNC,
+			DO,
+			IS,
+			THEN,
+			END,
+			NOT,
+			OR,
+			AND,
+			INHERITS,
+			CONTAINS,
+			CONSTRUCT,
+			EQUALS_KEY,
+			COMPFUNC,
+			BULK,
+			NEW,
+			VOID,
+		
+			// Literals
+			STRING_LIT,
+			CHAR_LIT,
+			INT_LIT,
+			FLOAT_LIT,
+		
+			// Symbols
+			PLUS,
+			MINUS,
+			TIMES,
+			DIVIDE,
+			PLUS_EQUALS,
+			MINUS_EQUALS,
+			TIMES_EQUALS,
+			DIVIDE_EQUALS,
+			EQUALS,
+		
+			// Miscellaneous
+			ESCEOF,
+			ESCNULL,
+			IDENTIFIER
+		} TokenType;
 
-		// Keywords
-		CLASS,
-		INTERFACE,
-		RECORD,
-		UNION,
-		VARIANT,
-		RUNFILE,
-		IMPORT,
-		VIRTUAL,
-		IF,
-		IDENTIFIER_KEY,
-		CASE,
-		SWITCH,
-		WHILE,
-		FOR,
-		FOREACH,
-		AS,
-		FUNC,
-		DO,
-		IS,
-		THEN,
-		END,
-		NOT,
-		OR,
-		AND,
-		INHERITS,
-		CONTAINS,
-		CONSTRUCT,
-		EQUALS_KEY,
-		COMPFUNC,
-		BULK,
-		NEW,
-		VOID,
+		TokenType type;
+		std::string lexeme;
+		int line;
+		int column;
 
-		// Literals
-		STRING_LIT,
-		CHAR_LIT,
-		INT_LIT,
-		FLOAT_LIT,
+		ESCtoken();
+		ESCtoken(TokenType type, std::string lexeme, int line, int column);
 
-		// Symbols
-		PLUS,
-		MINUS,
-		TIMES,
-		DIVIDE,
-		PLUS_EQUALS,
-		MINUS_EQUALS,
-		TIMES_EQUALS,
-		DIVIDE_EQUALS,
-		EQUALS,
+		static std::string getName(TokenType type);
 
-		// Miscellaneous
-		ESCEOF,
-		IDENTIFIER
-	} type;
-	std::string lexeme;
-	int line;
-	int column;
-} ESCtoken;
+		void logDebug();
+};

@@ -16,7 +16,7 @@ void ESClogger::logTrace(std::string msg) {
 
 	timestampStr = timestampStr.erase(timestampStr.length() - 1, 1);
 
-	std::cout << timestampStr << ": esc: " << stc::bold << stc::rgb_fg(225, 225, 225) << "trace: " << stc::reset << msg << std::endl;
+	std::cout << timestampStr << ": esc: " << stc::bold << stc::rgb_fg(200, 200, 200) << "trace: " << stc::reset << msg << std::endl;
 }
 
 void ESClogger::logDebug(std::string msg) {
@@ -67,6 +67,16 @@ void ESClogger::logError(std::string msg) {
 	std::cout << timestampStr << ": esc: " << stc::bold << stc::rgb_fg(200, 0, 0) << "error: " << stc::reset << msg << std::endl;
 }
 
+void ESClogger::logFatalBypass(std::string msg) {
+	time_t timestamp;
+	time(&timestamp);
+	std::string timestampStr = std::string(ctime(&timestamp));
+
+	timestampStr = timestampStr.erase(timestampStr.length() - 1, 1);
+
+	std::cout << timestampStr << ": esc: " << stc::bold << stc::rgb_fg(255, 0, 0) << "fatal: " << stc::reset << msg << std::endl;
+}
+
 void ESClogger::logFatal(std::string msg) {
 	time_t timestamp;
 	time(&timestamp);
@@ -76,5 +86,6 @@ void ESClogger::logFatal(std::string msg) {
 
 	std::cout << timestampStr << ": esc: " << stc::bold << stc::rgb_fg(255, 0, 0) << "fatal: " << stc::reset << msg << std::endl;
 
-	exit(1);
+	if (flags.exitOnFatal) exit(1);
+	logger.logDebug("Fatal error bypassed");
 }

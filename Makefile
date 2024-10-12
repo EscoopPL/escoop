@@ -26,6 +26,7 @@ install: $(BIN_DIR)/esc
 	cp $(BIN_DIR)/esc /usr/local/bin
 
 always:
+	clear
 	mkdir -p $(BUILD_DIR)
 	mkdir -p $(BIN_DIR)
 
@@ -36,4 +37,4 @@ softclean:
 	rm -rf $(BIN_DIR)
 
 run: always $(BIN_DIR)/esc install
-	esc
+	esc tests/helloworld/runfiles/entrypoint.es

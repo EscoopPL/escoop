@@ -13,13 +13,23 @@ ESCcompiler::~ESCcompiler() {
 }
 
 std::vector<ESCtoken> ESCcompiler::compile() {
-	ESCtoken token = lexer->nextToken();
+	logger.logTrace("Compile function started");
 
 	std::vector<ESCtoken> tokens = std::vector<ESCtoken>();
 
-	while (token.type != ESCtoken::ESCEOF) {
-		tokens.push_back(token);
+	ESCtoken token = lexer->nextToken();
+	tokens.push_back(token);
+
+	logger.logTrace("Retrieved one token from lexer");
+
+	logger.logTrace("Created token list");
+	while (token.type != ESCtoken::ESCEOF && token.type != ESCtoken::ESCNULL) {
 		token = lexer->nextToken();
+		tokens.push_back(token);
+	}
+
+	if (token.type == ESCtoken::ESCNULL) {
+		logger.logFatal("Error while scanning program");
 	}
 
 	return tokens;
