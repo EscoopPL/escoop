@@ -32,3 +32,7 @@
 *.app
 
 .DS_Store
+bin/*
+.vscode/*
+/.vscode
+/bin

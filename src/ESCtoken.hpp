@@ -39,6 +39,12 @@ typedef struct {
 		AND,
 		INHERITS,
 		CONTAINS,
+		CONSTRUCT,
+		EQUALS_KEY,
+		COMPFUNC,
+		BULK,
+		NEW,
+		VOID,
 
 		// Literals
 		STRING_LIT,
@@ -56,9 +62,12 @@ typedef struct {
 		TIMES_EQUALS,
 		DIVIDE_EQUALS,
 		EQUALS,
-		EQUALS_EQUALS,
 
 		// Miscellaneous
-		IDENTIFIER,
-	} TokenType;
+		ESCEOF,
+		IDENTIFIER
+	} type;
+	std::string lexeme;
+	int line;
+	int column;
 } ESCtoken;

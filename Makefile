@@ -4,7 +4,7 @@ SOURCES_CXX=$(shell find src -name '*.cpp')
 HEADERS_CXX=$(shell find src -name '*.hpp')
 OBJ_CXX=$(subst cpp,o,$(subst src/,build/,$(SOURCES_CXX)))
 
-.PHONEY: always clean run build
+.PHONEY: always clean run build softclean
 
 .SILENT:
 
@@ -19,7 +19,7 @@ $(BIN_DIR)/esc: $(OBJ_CXX)
 
 build/%.o: src/%.cpp $(HEADERS)
 	@echo Compiling $<, Producing $@
-	$(CXX) -std=c++17 -c -g -o $@ $<
+	$(CXX) -std=c++20 -c -g -o $@ $<
 	@echo $< Compiled, $@ Produced
 
 install: $(BIN_DIR)/esc
@@ -29,9 +29,11 @@ always:
 	mkdir -p $(BUILD_DIR)
 	mkdir -p $(BIN_DIR)
 
-clean:
-	rm -rf $(BIN_DIR)
+clean: softclean
 	rm -rf $(BUILD_DIR)
+
+softclean:
+	rm -rf $(BIN_DIR)
 
 run: always $(BIN_DIR)/esc install
 	esc

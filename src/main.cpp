@@ -17,13 +17,12 @@ int main(int argc, char** argv) {
 		{
  	    	source.append(buf);
 			source.append("\n");
-			logger.logTrace(buf);
    		}
    		myfile.close();
   	}
 	else logger.logFatal("Cannot open file " + filename);
 
-	ESCcompiler* compiler = new ESCcompiler(source);
+	ESCcompiler compiler = ESCcompiler(source);
 
-	delete compiler;
+	compiler.compile();
 }

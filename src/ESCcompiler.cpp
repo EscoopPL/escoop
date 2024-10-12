@@ -11,3 +11,16 @@ ESCcompiler::ESCcompiler(std::string source) {
 ESCcompiler::~ESCcompiler() {
 	delete lexer;
 }
+
+std::vector<ESCtoken> ESCcompiler::compile() {
+	ESCtoken token = lexer->nextToken();
+
+	std::vector<ESCtoken> tokens = std::vector<ESCtoken>();
+
+	while (token.type != ESCtoken::ESCEOF) {
+		tokens.push_back(token);
+		token = lexer->nextToken();
+	}
+
+	return tokens;
+}
