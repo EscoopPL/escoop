@@ -1,6 +1,6 @@
 #pragma once
 
-#include "common.hpp"
+#include "main.hpp"
 
 #include "ESCtoken.hpp"
 
@@ -12,9 +12,15 @@ class ESClexer {
 	private:
 		std::string source;
 		int line = 1;
-		int lineStart = 0;
-		int current = 0;
-		int start = 0;
+		int lineStart;
+		int current;
+		int start;
 		ESCtoken makeToken(ESCtoken::TokenType type);
-		
+		char advance();
+		char currentChar();
+		char peek();
+		char peek2();
+		bool match(char c);
+		bool atEOF();
+		void skipWhitespace();
 };

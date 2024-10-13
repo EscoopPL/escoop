@@ -1,4 +1,4 @@
-#include "common.hpp"
+#include "main.hpp"
 
 #include "ESCcompiler.hpp"
 
@@ -19,9 +19,6 @@ std::vector<ESCtoken> ESCcompiler::compile() {
 
 	ESCtoken token = lexer->nextToken();
 	tokens.push_back(token);
-
-	logger.logTrace("Retrieved one token from lexer");
-
 	logger.logTrace("Created token list");
 	while (token.type != ESCtoken::ESCEOF && token.type != ESCtoken::ESCNULL) {
 		token = lexer->nextToken();

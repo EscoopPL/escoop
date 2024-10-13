@@ -17,7 +17,7 @@ $(BIN_DIR)/esc: $(OBJ_CXX)
 	$(CXX) -O2 -g $^ -o $@
 	@echo $(OBJ_CXX) linked
 
-build/%.o: src/%.cpp $(HEADERS)
+build/%.o: src/%.cpp src/%.hpp
 	@echo Compiling $<, Producing $@
 	$(CXX) -std=c++20 -c -g -o $@ $<
 	@echo $< Compiled, $@ Produced
@@ -37,4 +37,6 @@ softclean:
 	rm -rf $(BIN_DIR)
 
 run: always $(BIN_DIR)/esc install
-	esc tests/helloworld/runfiles/entrypoint.es
+	sleep 3
+	clear
+	esc tests/helloworld/runfiles/entrypoint.es > esc.log

@@ -1,4 +1,4 @@
-#include "common.hpp"
+#include "main.hpp"
 
 #include "ESCtoken.hpp"
 
@@ -126,6 +126,8 @@ std::string ESCtoken::getName(TokenType type) {
 			return "ESCNULL";
 		case IDENTIFIER:
 			return "IDENTIFIER";
+		case NL:
+			return "NL";
 		default:
 			return "ERR";
 	}
@@ -134,6 +136,8 @@ std::string ESCtoken::getName(TokenType type) {
 void ESCtoken::logDebug() {
 	std::string output = "{type = ";
 	output += getName(type);
+	output += ", lexeme = ";
+	output += lexeme;
 	output += ", line = ";
 	output += std::to_string(line);
 	output += ", column = ";

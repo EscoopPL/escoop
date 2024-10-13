@@ -1,6 +1,6 @@
 #pragma once
 
-#include "common.hpp"
+#include "main.hpp"
 
 typedef struct {
 	enum {

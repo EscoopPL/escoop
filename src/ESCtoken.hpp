@@ -1,6 +1,6 @@
 #pragma once
 
-#include "common.hpp"
+#include "main.hpp"
 
 class ESCtoken {
 	public:
@@ -67,7 +67,8 @@ class ESCtoken {
 			// Miscellaneous
 			ESCEOF,
 			ESCNULL,
-			IDENTIFIER
+			IDENTIFIER,
+			NL
 		} TokenType;
 
 		TokenType type;

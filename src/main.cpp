@@ -1,4 +1,4 @@
-#include "common.hpp"
+#include "main.hpp"
 
 #include "ESCcompiler.hpp"
 #include "ESClogger.hpp"
@@ -15,7 +15,7 @@ int main(int argc, char** argv) {
   	std::ifstream myfile(filename);
   	if (myfile.is_open())
   	{
-  		while ( std::getline (myfile,buf) )
+  		while ( std::getline(myfile,buf) )
 		{
  	    	source.append(buf);
 			source.append("\n");

@@ -1,5 +1,7 @@
 #pragma once
 
+#include "main.hpp"
+
 #include "ESClexer.hpp"
 
 class ESCcompiler {
