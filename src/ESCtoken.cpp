@@ -16,6 +16,66 @@ ESCtoken::ESCtoken(TokenType type, std::string lexeme, int line, int column) {
 	this->column = column;
 }
 
+ESCtoken::TokenType ESCtoken::getType(std::string name) {
+	if ("STRING" == name) return ESCtoken::STRING;
+	else if ("INT" == name) return ESCtoken::INT;
+	else if ("FLOAT" == name) return ESCtoken::FLOAT;
+	else if ("BOOL" == name) return ESCtoken::BOOL;
+	else if ("CHAR" == name) return ESCtoken::CHAR;
+	else if ("ARRAY" == name) return ESCtoken::ARRAY;
+	else if ("CLASS" == name) return ESCtoken::CLASS;
+	else if ("INTERFACE" == name) return ESCtoken::INTERFACE;
+	else if ("RECORD" == name) return ESCtoken::RECORD;
+	else if ("UNION" == name) return ESCtoken::UNION;
+	else if ("VARIANT" == name) return ESCtoken::VARIANT;
+	else if ("RUNFILE" == name) return ESCtoken::RUNFILE;
+	else if ("IMPORT" == name) return ESCtoken::IMPORT;
+	else if ("VIRTUAL" == name) return ESCtoken::VIRTUAL;
+	else if ("IF" == name) return ESCtoken::IF;
+	else if ("IDENTIFIER_KEY" == name) return ESCtoken::IDENTIFIER_KEY;
+	else if ("CASE" == name) return ESCtoken::CASE;
+	else if ("SWITCH" == name) return ESCtoken::SWITCH;
+	else if ("WHILE" == name) return ESCtoken::WHILE;
+	else if ("FOR" == name) return ESCtoken::FOR;
+	else if ("FOREACH" == name) return ESCtoken::FOREACH;
+	else if ("AS" == name) return ESCtoken::AS;
+	else if ("FUNC" == name) return ESCtoken::FUNC;
+	else if ("DO" == name) return ESCtoken::DO;
+	else if ("IS" == name) return ESCtoken::IS;
+	else if ("THEN" == name) return ESCtoken::THEN;
+	else if ("END" == name) return ESCtoken::END;
+	else if ("NOT" == name) return ESCtoken::NOT;
+	else if ("OR" == name) return ESCtoken::OR;
+	else if ("AND" == name) return ESCtoken::AND;
+	else if ("INHERITS" == name) return ESCtoken::INHERITS;
+	else if ("CONTAINS" == name) return ESCtoken::CONTAINS;
+	else if ("CONSTRUCT" == name) return ESCtoken::CONSTRUCT;
+	else if ("EQUALS_KEY" == name) return ESCtoken::EQUALS_KEY;
+	else if ("COMPFUNC" == name) return ESCtoken::COMPFUNC;
+	else if ("BULK" == name) return ESCtoken::BULK;
+	else if ("NEW" == name) return ESCtoken::NEW;
+	else if ("VOID" == name) return ESCtoken::VOID;
+	else if ("STRING_LIT" == name) return ESCtoken::STRING_LIT;
+	else if ("CHAR_LIT" == name) return ESCtoken::CHAR_LIT;
+	else if ("INT_LIT" == name) return ESCtoken::INT_LIT;
+	else if ("FLOAT_LIT" == name) return ESCtoken::FLOAT_LIT;
+	else if ("PLUS" == name) return ESCtoken::PLUS;
+	else if ("MINUS" == name) return ESCtoken::MINUS;
+	else if ("TIMES" == name) return ESCtoken::TIMES;
+	else if ("DIVIDE" == name) return ESCtoken::DIVIDE;
+	else if ("PLUS_EQUALS" == name) return ESCtoken::PLUS_EQUALS;
+	else if ("MINUS_EQUALS" == name) return ESCtoken::MINUS_EQUALS;
+	else if ("TIMES_EQUALS" == name) return ESCtoken::TIMES_EQUALS;
+	else if ("DIVIDE_EQUALS" == name) return ESCtoken::DIVIDE_EQUALS;
+	else if ("EQUALS" == name) return ESCtoken::EQUALS;
+	else if ("ESCEOF" == name) return ESCtoken::ESCEOF;
+	else if ("ESCNULL" == name) return ESCtoken::ESCNULL;
+	else if ("IDENTIFIER" == name) return ESCtoken::IDENTIFIER_KEY;
+	else if ("NL" == name) return ESCtoken::NL;
+
+	return ESCtoken::ESCNULL;
+}
+
 std::string ESCtoken::getName(TokenType type) {
 	switch (type) {
 		case STRING:

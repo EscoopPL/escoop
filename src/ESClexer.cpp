@@ -104,7 +104,9 @@ ESCtoken ESClexer::nextToken() {
 				if (c == ' ' || c == '\n' || c == '\t') break;
 				else advance();
 			}
-			return makeToken(ESCtoken::IDENTIFIER);
+			ESCtoken::TokenType type = ESCtoken::getType(std::toupper(source.substr(start, current - start)));
+			type = type == ESCtoken::ESCNULL ? ESCtoken::IDENTIFIER : type;
+			return makeToken(type);
 	}
 
 	logger.logFatal("Unreachable code reached!");

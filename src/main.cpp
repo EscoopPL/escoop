@@ -38,3 +38,13 @@ int main(int argc, char** argv) {
 
 	logger.logTrace("Program finished");
 }
+
+std::string std::tolower(std::string str) {
+	std::transform(str.begin(), str.end(), str.begin(), [](unsigned char c){return std::tolower(c);});
+	return str;
+}
+
+std::string std::toupper(std::string str) {
+	std::transform(str.begin(), str.end(), str.begin(), [](unsigned char c){return std::toupper(c);});
+	return str;
+}

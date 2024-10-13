@@ -80,6 +80,7 @@ class ESCtoken {
 		ESCtoken(TokenType type, std::string lexeme, int line, int column);
 
 		static std::string getName(TokenType type);
+		static ESCtoken::TokenType getType(std::string name);
 
 		void logDebug();
 };
