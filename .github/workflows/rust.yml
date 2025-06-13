@@ -23,7 +23,7 @@ jobs:
           ~/.cargo/registry/cache/
           ~/.cargo/git/db/
           target/
-        key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+        key: ${{ runner.os }}-cargo-${{ hashFiles('Cargo.lock') }}
     - uses: actions/checkout@v4
     - name: Verify code using Clippy
       run: cargo clippy --verbose --release
@@ -44,7 +44,7 @@ jobs:
           ~/.cargo/registry/cache/
           ~/.cargo/git/db/
           target/
-        key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+        key: ${{ runner.os }}-cargo-${{ hashFiles('Cargo.lock') }}
     - uses: actions/checkout@v4
     - name: Build code on Linux
       run: cargo build --verbose --release
@@ -60,19 +60,19 @@ jobs:
     - uses: actions/cache@v4
       with:
         path: |
-          ~/.cargo/bin/
+          ~\.cargo/bin/
           ~/.cargo/registry/index/
           ~/.cargo/registry/cache/
           ~/.cargo/git/db/
           target/
-        key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+        key: ${{ runner.os }}-cargo-${{ hashFiles('Cargo.lock') }}
     - uses: actions/checkout@v4
     - name: Build code on Windows
       run: cargo build --verbose --release
     - uses: actions/upload-artifact@v4
       with:
         name: windows-esci
-        path: target/release/esci
+        path: target/release/esci.exe
 
   build_macos_silicon:
     runs-on: macos-latest
@@ -86,7 +86,7 @@ jobs:
           ~/.cargo/registry/cache/
           ~/.cargo/git/db/
           target/
-        key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+        key: ${{ runner.os }}-cargo-${{ hashFiles('Cargo.lock') }}
     - uses: actions/checkout@v4
     - name: Build code on MacOS Silicon
       run: cargo build --verbose --release
@@ -107,7 +107,7 @@ jobs:
           ~/.cargo/registry/cache/
           ~/.cargo/git/db/
           target/
-        key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+        key: ${{ runner.os }}-cargo-${{ hashFiles('Cargo.lock') }}
     - uses: actions/checkout@v4
     - name: Build code on MacOS Intel
       run: cargo build --verbose --release
