@@ -1,0 +1,40 @@
+identifier hello-world-v3.entrypoint
+
+comp text is
+    string value
+
+    construct string value is
+        self.value = value
+    end
+
+    func string get-text is
+        return value
+    end
+end
+
+obj printer is
+    component-list[text] msgs
+
+    // Lack of construct, default used
+
+    func void add-msg text msg is
+        call msgs.add msg
+    end
+
+    func void print is
+        call bulk func void string i is
+            call print i
+            call print ' '
+        end msgs
+    end
+end
+
+func void start is
+    printer hello-world-printer = printer
+    array[string] hello-world = ['hello,', 'world!']
+    array[text] hello-world-comp = call bulk func string string i is
+        return text i
+    end hello-world
+    call bulk hello-world-printer.add hello-world-comp
+    call hello-world-printer.print
+end

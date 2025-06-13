@@ -1,0 +1,11 @@
+identifier hello-world-simple.entrypoint
+
+extern func void print(str msg)
+
+func void start() is
+    print('Hello, world!')
+    i32 val = 0
+    print('val: ' + val.to-string())
+    val++
+    print('val: ' + val.to-string())
+end
