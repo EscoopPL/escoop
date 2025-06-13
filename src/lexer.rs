@@ -1,7 +1,7 @@
 #![deny(missing_docs)]
 //! Module for items related to lexical analysis of Escoop.
 
-use std::{fmt::Display, io, path::Path};
+use std::{fmt::Display, path::Path};
 
 use crate::{
     Cursor,
@@ -164,11 +164,11 @@ impl<'a> Lexer<'a> {
     /// Creates a new `Lexer`. `new_with_path` should be used instead of `new` if parsing a file,
     /// since `new_with_path` calls [`span::add_file`](crate::span::add_file) in addition to creating
     /// a `Lexer`.
-    pub fn new_with_path(source: &'a str, path: impl AsRef<Path>) -> Result<Self, io::Error> {
-        Ok(Lexer {
-            source: Cursor::new_with_path(source, path)?,
+    pub fn new_with_path(source: &'a str, path: impl AsRef<Path>) -> Self {
+        Lexer {
+            source: Cursor::new_with_path(source, path),
             span: Span::new(source),
-        })
+        }
     }
 
     fn next_char(&mut self) -> Option<char> {
@@ -215,12 +215,27 @@ impl<'a> Iterator for Lexer<'a> {
         match self.next_char().unwrap() {
             '\'' => {
                 let mut string = String::new();
+                let mut found = false;
                 while let Some(c) = self.peek_char() {
                     if c == '\'' {
+                        found = true;
+                        break;
+                    }
+                    if c == '\n' {
                         break;
                     }
                     string.push(c);
                     self.next_char();
+                }
+                if !found {
+                    let mut span = self.span;
+                    span.shrink_front(span.len() - 1);
+                    DiagBuilder::new(DiagLevel::Fatal)
+                    .message(DiagLevel::Fatal, "unterminated string")
+                    .set_span(self.span)
+                    .finish()
+                    .finish()
+                    .emit();
                 }
                 self.next_char();
                 make_token!(self, TokenType::StringLit, LexerValue::String(string))

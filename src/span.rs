@@ -344,7 +344,7 @@ impl Span {
                     _ => column += 1,
                 }
             }
-            let line_start = line_span.start - column + 1; // Calculate the index into the string that provides the start of the line
+            let line_start = line_span.start - (column - 1); // Calculate the index into the string that provides the start of the line
 
             let old_column = column; // Save column for future use
             let mut end = false;
@@ -363,12 +363,15 @@ impl Span {
                     _ => column += 1,
                 }
             }
-            let line_end = line_span.end + (column - old_column); // Calculate the index into the string that provides the end of the line
+            let line_end = line_span.start + (column - old_column); // Calculate the index into the string that provides the end of the line
 
             line_span.start = line_start; // Update the span
             line_span.end = line_end; // Update the span
 
-            if let Some(full_span) = apply_span(line_span) {
+            if let Some(mut full_span) = apply_span(line_span) {
+                let replacement = format!("\n  {} ", "|".blue().bold());
+                full_span = full_span.replace('\n', &replacement);
+
                 // Get the text belonging to the line's span
                 let msg_span_start = self.start - line_start; // Calculate the beginnning of the span relative to the beginning of the line
                 let msg_span_len = self.end - self.start; // Calculate the length of the span

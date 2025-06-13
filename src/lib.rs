@@ -1,6 +1,6 @@
 #![deny(deprecated)]
 
-use std::{collections::VecDeque, io, path::Path, str::Chars};
+use std::{collections::VecDeque, path::Path, str::Chars};
 
 pub mod diag;
 pub mod lexer;
@@ -15,22 +15,19 @@ struct Cursor<'a> {
 
 impl<'a> Cursor<'a> {
     fn new(source: &'a str) -> Self {
+        let chars = source.chars();
         Cursor {
             len_remaining: source.len(),
-            source: source.chars(),
+            source: chars,
             peeks: VecDeque::new(),
         }
     }
 
-    fn new_with_path(source: &'a str, path: impl AsRef<Path>) -> Result<Self, io::Error> {
+    fn new_with_path(source: &'a str, path: impl AsRef<Path>) -> Self {
         let path = path.as_ref();
         let name = path.as_os_str().to_string_lossy().to_string();
         span::add_file(name, source.to_string());
-        Ok(Cursor {
-            len_remaining: source.len(),
-            source: source.chars(),
-            peeks: VecDeque::new(),
-        })
+        Self::new(source)
     }
 
     fn eof(&self) -> bool {

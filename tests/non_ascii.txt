@@ -1,0 +1,4 @@
+This is a test for dealing with non-ascii characters in Escoops Diag system.
+The following is a few non-ascii characters. àêįœü
+The following is a character that escoop cannot scan. ;
+This is the last line, but it will never be lexed.

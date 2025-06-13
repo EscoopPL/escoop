@@ -1,9 +1,19 @@
 #![deny(missing_docs)]
 //! Implementation of `rustc`'s `Diag` diagnostic system.
 
-use std::sync::RwLock;
+use std::sync::{OnceLock, RwLock};
 
 static DIAGS: RwLock<Vec<Diag>> = RwLock::new(vec![]);
+static BUG_FOUND: OnceLock<()> = OnceLock::new();
+
+/// Will return true if there is a bug found in the compiler. Useful for testing.
+pub fn bug() -> bool {
+    BUG_FOUND.get().is_some()
+}
+
+pub(crate) fn set_bug() {
+    let _ = BUG_FOUND.set(()); // If there's already a bug found, we don't care.
+}
 
 use colored::Colorize;
 
@@ -109,11 +119,34 @@ impl Diag {
         }
     }
 
+    /// Emits a generic no-span one message fatal diagnostic.
+    pub fn emit_fatal(msg: impl ToString) {
+        Diag::emit_new(msg, DiagLevel::Fatal);
+    }
+
+    /// Emits a generic no-span diagnostic.
+    pub fn emit_new(msg: impl ToString, level: DiagLevel) {
+        let msg = msg.to_string();
+
+        Diag {
+            messages: vec![
+                DiagMessage {
+                    level,
+                    span: None,
+                    msg,
+                }
+            ],
+            level,
+            consumed: false,
+        }.emit();
+    }
+
     /// Flushes all emitted `Diag`s to the console.
     pub fn flush() {
-        for i in DIAGS.try_write().unwrap().drain(..) {
-            for i in &i.messages {
-                let (name, color) = match i.level {
+        let drain: Vec<Diag> = DIAGS.try_write().unwrap().drain(..).collect();
+        for i in drain {
+            for j in &i.messages {
+                let (name, color) = match j.level {
                     DiagLevel::Error => ("error", colored::Color::BrightRed),
                     DiagLevel::Warn => todo!(),
                     DiagLevel::Fatal => ("error", colored::Color::BrightRed),
@@ -121,13 +154,16 @@ impl Diag {
                     DiagLevel::OnceNote => todo!(),
                     DiagLevel::Help => ("help", colored::Color::BrightCyan),
                     DiagLevel::OnceHelp => todo!(),
-                    DiagLevel::Bug => todo!(),
+                    DiagLevel::Bug => {
+                        ("bug", colored::Color::BrightCyan)
+                    },
                     DiagLevel::DelayedBug => todo!(),
                 };
                 let name = name.bold().color(color);
 
-                eprintln!("{}{}{}", name, ": ".bold(), i.msg.bold());
-                if let Some(span) = i.span {
+                let j_msg = j.msg.replace('\n', format!("\n{}", " ".repeat(name.len() + 2)).as_str());
+                eprintln!("{}{}{}", name, ": ".bold(), j_msg.bold());
+                if let Some(span) = j.span {
                     span.display_span(color);
                 }
             }
@@ -136,11 +172,13 @@ impl Diag {
 
     /// Emits `Diag` to be printed to the console. If the `Diag` is fatal, then `emit` will flush immediately.
     pub fn emit(mut self) {
-        let fatal = matches!(self.level, DiagLevel::Fatal);
+        let level = self.level;
         self.consumed = true;
         DIAGS.try_write().unwrap().push(self);
-        if fatal {
-            Diag::flush();
+        match level {
+            DiagLevel::Fatal => Diag::flush(),
+            DiagLevel::Bug => set_bug(),
+            _ => {}
         }
     }
 }
@@ -154,6 +192,7 @@ impl Drop for Diag {
 }
 
 /// Level of severity for `Diag`
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum DiagLevel {
     /// Error that causes the compiler to stop compiling.
     Error,
