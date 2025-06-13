@@ -96,7 +96,7 @@ jobs:
         rm -rf $HOME/.rustup
         rm -rf $HOME/.cargo
         curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
-        source %USERPROFILE%\.cargo\env
+        source $HOME/.cargo/env
     - name: Build code on Windows
       run: cargo build --verbose --release
     - uses: actions/upload-artifact@v4
