@@ -31,9 +31,7 @@ jobs:
     - uses: actions/checkout@v4
     - name: Install Rust
       run: |
-        rm -rf $HOME/.rustup
-        rm -rf $HOME/.cargo
-        which cargo || curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+        which cargo || rm -rf $HOME/.rustup | rm -rf $HOME/.cargo | curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
         source $HOME/.cargo/env
     - name: Verify code using Clippy
       run: cargo clippy --verbose --release
@@ -62,9 +60,7 @@ jobs:
     - uses: actions/checkout@v4
     - name: Install Rust
       run: |
-        rm -rf $HOME/.rustup
-        rm -rf $HOME/.cargo
-        which cargo || curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+        which cargo || rm -rf $HOME/.rustup | rm -rf $HOME/.cargo | curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
         source $HOME/.cargo/env
     - name: Build code on Linux
       run: cargo build --verbose --release
@@ -93,9 +89,7 @@ jobs:
     - uses: actions/checkout@v4
     - name: Install Rust
       run: |
-        rm -rf $HOME/.rustup
-        rm -rf $HOME/.cargo
-        which cargo || which cargo || curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+        which cargo || rm -rf $HOME/.rustup | rm -rf $HOME/.cargo || curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
         export PATH="$HOME/.cargo/bin:$PATH"
     - name: Build code on Windows
       run: cargo build --verbose --release
@@ -124,9 +118,7 @@ jobs:
     - uses: actions/checkout@v4
     - name: Install Rust
       run: |
-        rm -rf $HOME/.rustup
-        rm -rf $HOME/.cargo
-        which cargo || curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+        which cargo || rm -rf $HOME/.rustup | rm -rf $HOME/.cargo | curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
         source $HOME/.cargo/env
     - name: Build code on MacOS Silicon
       run: cargo build --verbose --release
@@ -151,9 +143,7 @@ jobs:
     - uses: actions/checkout@v4
     - name: Install Rust
       run: |
-        rm -rf $HOME/.rustup
-        rm -rf $HOME/.cargo
-        which cargo || curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+        which cargo || rm -rf $HOME/.rustup | rm -rf $HOME/.cargo | curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
         source $HOME/.cargo/env
     - name: Build code on MacOS Intel
       run: cargo build --verbose --release
