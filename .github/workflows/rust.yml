@@ -27,6 +27,7 @@ jobs:
     - uses: actions/checkout@v4
     - name: Install Rust
       run: |
+        mkdir -p $HOME/.cargo/bin
         curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
         source $HOME/.cargo/env
     - name: Verify code using Clippy
@@ -52,6 +53,7 @@ jobs:
     - uses: actions/checkout@v4
     - name: Install Rust
       run: |
+        mkdir -p $HOME/.cargo/bin
         curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
         source $HOME/.cargo/env
     - name: Build code on Linux
@@ -77,8 +79,9 @@ jobs:
     - uses: actions/checkout@v4
     - name: Install Rust
       run: |
+        mkdir -p $HOME/.cargo/bin
         curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
-        source $HOME/.cargo/env
+        $env:Path += ";$HOME\.cargo\bin"
     - name: Build code on Windows
       run: cargo build --verbose --release
     - uses: actions/upload-artifact@v4
@@ -102,6 +105,7 @@ jobs:
     - uses: actions/checkout@v4
     - name: Install Rust
       run: |
+        mkdir -p $HOME/.cargo/bin
         curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
         source $HOME/.cargo/env
     - name: Build code on MacOS Silicon
@@ -127,6 +131,7 @@ jobs:
     - uses: actions/checkout@v4
     - name: Install Rust
       run: |
+        mkdir -p $HOME/.cargo/bin
         curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
         source $HOME/.cargo/env
     - name: Build code on MacOS Intel
