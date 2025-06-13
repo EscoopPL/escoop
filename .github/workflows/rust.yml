@@ -39,10 +39,18 @@ jobs:
     - name: Build code on Windows
       run: cargo build --verbose
 
-  build_macos:
+  build_macos_silicon:
     runs-on: macos-latest
 
     steps:
     - uses: actions/checkout@v4
-    - name: Build code on MacOS
+    - name: Build code on MacOS Silicon
+      run: cargo build --verbose
+
+  build_macos_intel:
+    runs-on: macos-13
+
+    steps:
+    - uses: actions/checkout@v4
+    - name: Build code on MacOS Itel
       run: cargo build --verbose
