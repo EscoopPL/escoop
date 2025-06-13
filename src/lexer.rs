@@ -1,3 +1,6 @@
+#![deny(missing_docs)]
+//! Module for items related to lexical analysis of Escoop.
+
 use std::{fmt::Display, io, path::Path};
 
 use crate::{
@@ -6,31 +9,53 @@ use crate::{
     span::Span,
 };
 
+/// Enumeration of every possible type of [`Token`]
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum TokenType {
-    Identifier, // Requires String LexerValue
-    StringLit,  // Requires String LexerValue
-    NumberLit,  // Requires Number LexerValue
+    /// Identifier of items (e.g. foo). The value of [`Token`] should be a `String`.
+    Identifier,
+    /// String literal (e.g. 'bar'). The value of [`Token`] should be a `String`.
+    StringLit,
+    /// Number literal (e.g. 5.4). The value of [`Token`] should be a `Number`.
+    NumberLit,
+    /// Identifier keyword
     IdentifierKey,
+    /// Extern keyword
     Extern,
+    /// Func keyword
     Func,
+    /// Void keyword
     Void,
+    /// Is keyword
     Is,
+    /// End keyword
     End,
+    /// Comma
     Comma,
+    /// Closing parenthesis
     CloseParen,
+    /// Opening parenthesis
     OpenParen,
+    /// Dot/Period
     Dot,
+    /// Equals sign
     Equals,
+    /// Plus sign
     Plus,
+    /// Minus sign
     Minus,
+    /// Star (*)
     Star,
+    /// Slash (/)
     Slash,
 }
 
+/// Represents a value in the lexer that a token might have.
 #[derive(Debug, Clone, PartialEq)]
 pub enum LexerValue {
+    /// String value
     String(String),
+    /// Numeric value
     Number(f32),
 }
 
@@ -43,6 +68,7 @@ impl Display for LexerValue {
     }
 }
 
+/// Representation of a lexical token in Escoop.
 #[derive(Debug, Clone, PartialEq)]
 pub struct Token {
     token_type: TokenType,
@@ -51,14 +77,22 @@ pub struct Token {
 }
 
 impl Token {
+    /// Gets the span of a token.
     pub fn span(&self) -> Span {
         self.span
     }
 
+    /// Gets the value of a token by borrowing it.
     pub fn value(&self) -> &Option<LexerValue> {
         &self.value
     }
 
+    /// Gets the value of a token by moving it.
+    pub fn move_value(self) -> Option<LexerValue> {
+        self.value
+    }
+
+    /// Gets the type of a token.
     pub fn token_type(&self) -> TokenType {
         self.token_type
     }
@@ -108,12 +142,18 @@ macro_rules! make_token {
     }};
 }
 
+/// Escoop lexical analyzer. Turns a source file into tokens.
 pub struct Lexer<'a> {
     source: Cursor<'a>,
     span: Span,
 }
 
 impl<'a> Lexer<'a> {
+    /// Creates a new `Lexer`.
+    /// [`new_with_path`](Lexer::new_with_path) should be used instead,
+    /// since `new` doesn't call [`span::add_file`](crate::span::add_file),
+    /// which should be called if lexing a file.
+    /// However, if not lexing a file, `new` may be used.
     pub fn new(source: &'a str) -> Self {
         Lexer {
             source: Cursor::new(source),
@@ -121,6 +161,9 @@ impl<'a> Lexer<'a> {
         }
     }
 
+    /// Creates a new `Lexer`. `new_with_path` should be used instead of `new` if parsing a file,
+    /// since `new_with_path` calls [`span::add_file`](crate::span::add_file) in addition to creating
+    /// a `Lexer`.
     pub fn new_with_path(source: &'a str, path: impl AsRef<Path>) -> Result<Self, io::Error> {
         Ok(Lexer {
             source: Cursor::new_with_path(source, path)?,
@@ -130,7 +173,7 @@ impl<'a> Lexer<'a> {
 
     fn next_char(&mut self) -> Option<char> {
         let next = self.source.next();
-        self.span.grow();
+        self.span.grow_front(1);
         next
     }
 
@@ -154,6 +197,7 @@ impl<'a> Lexer<'a> {
         }
     }
 
+    /// Checks if the `Lexer` is at the end of the source.
     pub fn eof(&self) -> bool {
         self.source.eof()
     }

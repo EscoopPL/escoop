@@ -2,13 +2,6 @@
 
 use std::{collections::VecDeque, io, path::Path, str::Chars};
 
-use crate::diag::Diag;
-
-mod prelude {
-    #[allow(unused_imports)]
-    pub use log::{debug, error, info, trace, warn};
-}
-
 pub mod diag;
 pub mod lexer;
 pub mod parser;
@@ -32,7 +25,7 @@ impl<'a> Cursor<'a> {
     fn new_with_path(source: &'a str, path: impl AsRef<Path>) -> Result<Self, io::Error> {
         let path = path.as_ref();
         let name = path.as_os_str().to_string_lossy().to_string();
-        Diag::add_file(name, source.to_string());
+        span::add_file(name, source.to_string());
         Ok(Cursor {
             len_remaining: source.len(),
             source: source.chars(),

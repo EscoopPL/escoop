@@ -53,16 +53,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "clang_log"
-version = "2.1.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2858ed2df42fec2f6385b1012be3577a453639209d7b51bc8cef318b0ae58807"
-dependencies = [
- "colored",
- "log",
-]
-
-[[package]]
 name = "clap"
 version = "4.5.40"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -121,11 +111,8 @@ dependencies = [
 name = "escoop"
 version = "0.1.0"
 dependencies = [
- "clang_log",
  "clap",
  "colored",
- "log",
- "peek-again",
 ]
 
 [[package]]
@@ -141,22 +128,10 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7943c866cc5cd64cbc25b2e01621d07fa8eb2a1a23160ee81ce38704e97b8ecf"
 
 [[package]]
-name = "log"
-version = "0.4.27"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "13dc2df351e3202783a1fe0d44375f7295ffb4049267b0f3018346dc122a1d94"
-
-[[package]]
 name = "once_cell_polyfill"
 version = "1.70.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a4895175b425cb1f87721b59f0f286c2092bd4af812243672510e1ac53e2e0ad"
-
-[[package]]
-name = "peek-again"
-version = "0.4.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "71871546f8c0f4b6260d060a5f4c3143d42bc4e03373c4adae0a41a0fa61b580"
 
 [[package]]
 name = "proc-macro2"
