@@ -25,6 +25,10 @@ jobs:
           target/
         key: ${{ runner.os }}-cargo-${{ hashFiles('Cargo.lock') }}
     - uses: actions/checkout@v4
+    - name: Install Rust
+      run: |
+        curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+        source $HOME/.cargo/env
     - name: Verify code using Clippy
       run: cargo clippy --verbose --release
     - name: Verify formatting
@@ -46,6 +50,10 @@ jobs:
           target/
         key: ${{ runner.os }}-cargo-${{ hashFiles('Cargo.lock') }}
     - uses: actions/checkout@v4
+    - name: Install Rust
+      run: |
+        curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+        source $HOME/.cargo/env
     - name: Build code on Linux
       run: cargo build --verbose --release
     - uses: actions/upload-artifact@v4
@@ -60,13 +68,17 @@ jobs:
     - uses: actions/cache@v4
       with:
         path: |
-          ~\.cargo/bin/
+          ~/.cargo/bin/
           ~/.cargo/registry/index/
           ~/.cargo/registry/cache/
           ~/.cargo/git/db/
           target/
         key: ${{ runner.os }}-cargo-${{ hashFiles('Cargo.lock') }}
     - uses: actions/checkout@v4
+    - name: Install Rust
+      run: |
+        curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+        source $HOME/.cargo/env
     - name: Build code on Windows
       run: cargo build --verbose --release
     - uses: actions/upload-artifact@v4
@@ -88,6 +100,10 @@ jobs:
           target/
         key: ${{ runner.os }}-cargo-${{ hashFiles('Cargo.lock') }}
     - uses: actions/checkout@v4
+    - name: Install Rust
+      run: |
+        curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+        source $HOME/.cargo/env
     - name: Build code on MacOS Silicon
       run: cargo build --verbose --release
     - uses: actions/upload-artifact@v4
@@ -109,6 +125,10 @@ jobs:
           target/
         key: ${{ runner.os }}-cargo-${{ hashFiles('Cargo.lock') }}
     - uses: actions/checkout@v4
+    - name: Install Rust
+      run: |
+        curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+        source $HOME/.cargo/env
     - name: Build code on MacOS Intel
       run: cargo build --verbose --release
     - uses: actions/upload-artifact@v4
