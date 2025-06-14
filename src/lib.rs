@@ -1,11 +1,13 @@
 #![deny(deprecated)]
 
-use std::{collections::VecDeque, path::Path, str::Chars};
+use std::{collections::VecDeque, path::PathBuf, str::Chars};
 
 pub mod diag;
 pub mod lexer;
 pub mod parser;
 pub mod span;
+
+use ariadne::{Cache as AriadneCache, Source as AriadneSource};
 
 struct Cursor<'a> {
     len_remaining: usize,
@@ -21,13 +23,6 @@ impl<'a> Cursor<'a> {
             source: chars,
             peeks: VecDeque::new(),
         }
-    }
-
-    fn new_with_path(source: &'a str, path: impl AsRef<Path>) -> Self {
-        let path = path.as_ref();
-        let name = path.as_os_str().to_string_lossy().to_string();
-        span::add_file(name, source.to_string());
-        Self::new(source)
     }
 
     fn eof(&self) -> bool {
@@ -58,6 +53,43 @@ impl<'a> Iterator for Cursor<'a> {
         } else {
             self.peeks.pop_front().unwrap() // Just confirmed that self.peeks isn't empty
         }
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+pub struct Source<I: AsRef<str> = String>(PathBuf, AriadneSource<I>);
+
+impl<I: AsRef<str>> Source<I> {
+    pub(crate) fn path(&self) -> &PathBuf {
+        &self.0
+    }
+
+    pub fn new(path: impl Into<PathBuf>, source: I) -> Self {
+        Source(path.into(), source.into())
+    }
+}
+
+impl<I: AsRef<str>> AriadneCache<()> for Source<I> {
+    type Storage = I;
+
+    fn fetch(&mut self, id: &()) -> Result<&AriadneSource<Self::Storage>, impl std::fmt::Debug> {
+        self.1.fetch(id)
+    }
+
+    fn display<'a>(&self, id: &'a ()) -> Option<impl std::fmt::Display + 'a> {
+        self.1.display(id)
+    }
+}
+
+impl<I: AsRef<str>> AriadneCache<()> for &Source<I> {
+    type Storage = I;
+
+    fn fetch(&mut self, _: &()) -> Result<&AriadneSource<I>, impl std::fmt::Debug> {
+        let res: Result<&AriadneSource<I>, ()> = Ok(&self.1);
+        res
+    }
+    fn display<'a>(&self, id: &'a ()) -> Option<impl std::fmt::Display + 'a> {
+        self.1.display(id)
     }
 }
 

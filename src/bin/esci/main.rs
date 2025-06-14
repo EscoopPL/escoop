@@ -1,10 +1,7 @@
 use std::{fs, path::PathBuf};
 
 use clap::{Parser as ClapParser, ValueEnum};
-use escoop::{
-    diag::{Diag},
-    lexer,
-};
+use escoop::{lexer::Lexer, Source};
 
 #[derive(ClapParser)]
 struct Args {
@@ -37,13 +34,13 @@ fn main() {
             if args.verbose {
                 msg += format!(" ({:?})", err.kind()).as_str();
             }
-            Diag::emit_fatal(msg);
             return;
         }
         
     };
 
-    let lexer = lexer::Lexer::new_with_path(file.as_str(), &path);
+    let src = Source::new(path, file.as_str());
+    let lexer = Lexer::new(&src);
 
     if matches!(args.debug, Some(DebugMode::Lexer)) {
         for i in lexer {

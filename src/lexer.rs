@@ -1,12 +1,12 @@
 #![deny(missing_docs)]
 //! Module for items related to lexical analysis of Escoop.
 
-use std::{fmt::Display, path::Path};
+use std::fmt::Display;
+
+use ariadne::{Report, ReportKind};
 
 use crate::{
-    Cursor,
-    diag::{DiagBuilder, DiagLevel},
-    span::Span,
+    span::Span, Cursor, Source
 };
 
 /// Enumeration of every possible type of [`Token`]
@@ -70,15 +70,15 @@ impl Display for LexerValue {
 
 /// Representation of a lexical token in Escoop.
 #[derive(Debug, Clone, PartialEq)]
-pub struct Token {
+pub struct Token<'src> {
     token_type: TokenType,
-    span: Span,
+    span: Span<'src>,
     value: Option<LexerValue>,
 }
 
-impl Token {
+impl<'src> Token<'src> {
     /// Gets the span of a token.
-    pub fn span(&self) -> Span {
+    pub fn span(&self) -> Span<'src> {
         self.span
     }
 
@@ -98,7 +98,7 @@ impl Token {
     }
 }
 
-impl Display for Token {
+impl<'src> Display for Token<'src> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self.token_type {
             TokenType::Identifier => write!(f, "{}", self.value.as_ref().unwrap()),
@@ -143,45 +143,35 @@ macro_rules! make_token {
 }
 
 /// Escoop lexical analyzer. Turns a source file into tokens.
-pub struct Lexer<'a> {
-    source: Cursor<'a>,
-    span: Span,
+pub struct Lexer<'src> {
+    cursor: Cursor<'src>,
+    span: Span<'src>,
+    src: Source<&'src str>,
 }
 
-impl<'a> Lexer<'a> {
-    /// Creates a new `Lexer`.
-    /// [`new_with_path`](Lexer::new_with_path) should be used instead,
-    /// since `new` doesn't call [`span::add_file`](crate::span::add_file),
-    /// which should be called if lexing a file.
-    /// However, if not lexing a file, `new` may be used.
-    pub fn new(source: &'a str) -> Self {
-        Lexer {
-            source: Cursor::new(source),
-            span: Span::new(source),
-        }
-    }
-
+impl<'src> Lexer<'src> {
     /// Creates a new `Lexer`. `new_with_path` should be used instead of `new` if parsing a file,
     /// since `new_with_path` calls [`span::add_file`](crate::span::add_file) in addition to creating
     /// a `Lexer`.
-    pub fn new_with_path(source: &'a str, path: impl AsRef<Path>) -> Self {
+    pub fn new(src: &'src Source<&'src str>) -> Self {
         Lexer {
-            source: Cursor::new_with_path(source, path),
-            span: Span::new(source),
+            src: src.clone(),
+            cursor: Cursor::new(src.1.text()),
+            span: Span::new(src),
         }
     }
 
     fn next_char(&mut self) -> Option<char> {
-        let next = self.source.next();
+        let next = self.cursor.next();
         self.span.grow_front(1);
         next
     }
 
     fn peek_char(&mut self) -> Option<char> {
-        self.source.peek()
+        self.cursor.peek()
     }
 
-    fn update_span(&mut self) -> Span {
+    fn update_span(&mut self) -> Span<'src> {
         let span = self.span;
         self.span.update();
         span
@@ -199,12 +189,12 @@ impl<'a> Lexer<'a> {
 
     /// Checks if the `Lexer` is at the end of the source.
     pub fn eof(&self) -> bool {
-        self.source.eof()
+        self.cursor.eof()
     }
 }
 
-impl<'a> Iterator for Lexer<'a> {
-    type Item = Token;
+impl<'src> Iterator for Lexer<'src> {
+    type Item = Token<'src>;
 
     fn next(&mut self) -> Option<Self::Item> {
         self.skip_whitespace();
@@ -230,12 +220,13 @@ impl<'a> Iterator for Lexer<'a> {
                 if !found {
                     let mut span = self.span;
                     span.shrink_front(span.len() - 1);
-                    DiagBuilder::new(DiagLevel::Fatal)
+                    /*DiagBuilder::new(DiagLevel::Fatal)
                     .message(DiagLevel::Fatal, "unterminated string")
                     .set_span(self.span)
                     .finish()
                     .finish()
-                    .emit();
+                    .emit();*/
+                    Report::build(ReportKind::Error, span).finish().eprint(&self.src).expect("IO error");
                 }
                 self.next_char();
                 make_token!(self, TokenType::StringLit, LexerValue::String(string))
@@ -305,13 +296,8 @@ impl<'a> Iterator for Lexer<'a> {
                     _ => make_token!(self, TokenType::Identifier, LexerValue::String(string)),
                 }
             }
-            c => {
-                DiagBuilder::new(DiagLevel::Fatal)
-                    .message(DiagLevel::Fatal, format!("unexpected character `{c}`"))
-                    .set_span(self.span)
-                    .finish()
-                    .finish()
-                    .emit();
+            _ => {
+                Report::build(ReportKind::Error, self.span).finish().eprint(&self.src).expect("IO error");
                 None
             }
         }
@@ -320,45 +306,39 @@ impl<'a> Iterator for Lexer<'a> {
 
 #[test]
 fn whitespace_test() {
-    let mut lexer = Lexer::new("Hello,  \nthis is a test.");
-    lexer.source.next();
-    lexer.source.next();
-    lexer.source.next();
-    lexer.source.next();
-    lexer.source.next();
-    lexer.source.next(); // '  \nthis is a test.'
+    let src = Source::new("test.txt", "Hello,  \nthis is a test.");
+    let mut lexer = Lexer::new(&src);
+    lexer.cursor.next();
+    lexer.cursor.next();
+    lexer.cursor.next();
+    lexer.cursor.next();
+    lexer.cursor.next();
+    lexer.cursor.next(); // '  \nthis is a test.'
     lexer.skip_whitespace();
-    assert_eq!(lexer.source.next(), Some('t'));
-    assert_eq!(lexer.source.next(), Some('h'));
+    assert_eq!(lexer.cursor.next(), Some('t'));
+    assert_eq!(lexer.cursor.next(), Some('h'));
 }
 
 #[test]
 fn eof_test() {
-    let mut lexer = Lexer::new("");
+    let src = Source::new("empty.txt", "");
+    let mut lexer = Lexer::new(&src);
     assert!(lexer.next().is_none());
 }
 
 #[test]
 fn span_test() {
     let file = "identifier test\n\nidentifier2 test3 test9";
-    let mut lexer = Lexer::new(file);
+    let src = Source::new("test.scp", file);
+    let mut lexer = Lexer::new(&src);
     let token = lexer.next().unwrap();
-    assert_eq!(token.span().apply(file), "identifier");
+    assert_eq!(token.span().apply(), "identifier");
     let token = lexer.next().unwrap();
-    assert_eq!(token.span().apply(file), "test");
+    assert_eq!(token.span().apply(), "test");
     let token = lexer.next().unwrap();
-    assert_eq!(token.span().apply(file), "identifier2");
+    assert_eq!(token.span().apply(), "identifier2");
     let token = lexer.next().unwrap();
-    assert_eq!(token.span().apply(file), "test3");
+    assert_eq!(token.span().apply(), "test3");
     let token = lexer.next().unwrap();
-    assert_eq!(token.span().apply(file), "test9");
-}
-
-#[test]
-#[should_panic]
-fn span_origin_test() {
-    let file = "Hello!";
-    let file2 = "Goodbye!";
-    let span2 = Span::new(file2);
-    span2.apply(file);
+    assert_eq!(token.span().apply(), "test9");
 }
