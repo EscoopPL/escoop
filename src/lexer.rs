@@ -3,11 +3,9 @@
 
 use std::fmt::Display;
 
-use ariadne::{Report, ReportKind};
+use codespan_reporting::diagnostic::Label;
 
-use crate::{
-    span::Span, Cursor, Source
-};
+use crate::{diag::Diag, span::Span, Cursor, Source};
 
 /// Enumeration of every possible type of [`Token`]
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -156,7 +154,7 @@ impl<'src> Lexer<'src> {
     pub fn new(src: &'src Source<&'src str>) -> Self {
         Lexer {
             src: src.clone(),
-            cursor: Cursor::new(src.1.text()),
+            cursor: Cursor::new(src.source),
             span: Span::new(src),
         }
     }
@@ -226,7 +224,11 @@ impl<'src> Iterator for Lexer<'src> {
                     .finish()
                     .finish()
                     .emit();*/
-                    Report::build(ReportKind::Error, span).finish().eprint(&self.src).expect("IO error");
+                    Diag::error(&self.src).with_message("unterminated string")
+                    .with_label(
+                        Label::primary((), self.span)
+                    )
+                    .finish().emit();
                 }
                 self.next_char();
                 make_token!(self, TokenType::StringLit, LexerValue::String(string))
@@ -296,8 +298,12 @@ impl<'src> Iterator for Lexer<'src> {
                     _ => make_token!(self, TokenType::Identifier, LexerValue::String(string)),
                 }
             }
-            _ => {
-                Report::build(ReportKind::Error, self.span).finish().eprint(&self.src).expect("IO error");
+            c => {
+                Diag::error(&self.src).with_message(format!("unknown character `{c}`"))
+                .with_label(
+                    Label::primary((), self.span)
+                )
+                .finish().emit();
                 None
             }
         }
@@ -306,7 +312,7 @@ impl<'src> Iterator for Lexer<'src> {
 
 #[test]
 fn whitespace_test() {
-    let src = Source::new("test.txt", "Hello,  \nthis is a test.");
+    let src = Source::new("Hello,  \nthis is a test.", "test.txt");
     let mut lexer = Lexer::new(&src);
     lexer.cursor.next();
     lexer.cursor.next();
@@ -321,7 +327,7 @@ fn whitespace_test() {
 
 #[test]
 fn eof_test() {
-    let src = Source::new("empty.txt", "");
+    let src = Source::new("", "empty.txt");
     let mut lexer = Lexer::new(&src);
     assert!(lexer.next().is_none());
 }
@@ -329,7 +335,7 @@ fn eof_test() {
 #[test]
 fn span_test() {
     let file = "identifier test\n\nidentifier2 test3 test9";
-    let src = Source::new("test.scp", file);
+    let src = Source::new(file, "test.scp");
     let mut lexer = Lexer::new(&src);
     let token = lexer.next().unwrap();
     assert_eq!(token.span().apply(), "identifier");

@@ -1,7 +1,6 @@
-use core::panic;
 use std::fs;
 
-use escoop::{diag, lexer::Lexer, Source};
+use escoop::{Source, diag, lexer::Lexer};
 
 #[test]
 fn non_ascii() {
@@ -9,9 +8,7 @@ fn non_ascii() {
     let src = Source::new("tests/non_ascii.txt", text.as_str());
     let lexer = Lexer::new(&src);
     lexer.for_each(|x| {
-        //dbg!(x);
-        drop(x);
-    }); // Exhaust all tokens, we've reached the semicolon, which will cause a diagnostic to be outputted
-    assert!(!diag::bug());
-    panic!();
+        x.span().apply();
+    }); // Exhaust all tokens, if span gets out of sync, we'll know
+    assert!(!diag::error());
 }

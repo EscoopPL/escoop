@@ -1,7 +1,7 @@
 use std::{fs, path::PathBuf};
 
 use clap::{Parser as ClapParser, ValueEnum};
-use escoop::{lexer::Lexer, Source};
+use escoop::{Source, lexer::Lexer};
 
 #[derive(ClapParser)]
 struct Args {
@@ -15,7 +15,7 @@ struct Args {
     debug: Option<DebugMode>,
 }
 
-#[derive(Copy, Clone, PartialEq, Eq, ValueEnum)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq, ValueEnum)]
 enum DebugMode {
     Lexer,
 }
@@ -24,22 +24,20 @@ fn main() {
     let args = Args::parse();
     let path = args
         .file
-        .unwrap_or(PathBuf::from("tests/hello-world-simple/entrypoint.scp"));
+        .unwrap_or(PathBuf::from("escoop-tests/hello-world-simple/entrypoint.scp"));
     let file = match fs::read_to_string(&path) {
-        Ok(file) => {
-            file
-        }
+        Ok(file) => file,
         Err(err) => {
             let mut msg = format!("could not open `{}`: {}", path.to_string_lossy(), err);
             if args.verbose {
                 msg += format!(" ({:?})", err.kind()).as_str();
             }
+            println!("{msg}");
             return;
         }
-        
     };
 
-    let src = Source::new(path, file.as_str());
+    let src = Source::new(file.as_str(), path);
     let lexer = Lexer::new(&src);
 
     if matches!(args.debug, Some(DebugMode::Lexer)) {

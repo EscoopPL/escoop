@@ -1,11 +1,9 @@
 #![deny(missing_docs)]
 //! Module holding the `Span` type, which represents an area of a file.
 
-use std::fmt::Display;
+use std::{fmt::Display, ops::Range};
 
 use crate::Source;
-
-use ariadne::Span as AriadneSpan;
 
 /// The `Span` type represents an area of a file. `'src` represents the lifetime of the source.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -16,16 +14,17 @@ pub struct Span<'src> {
 }
 
 impl<'src> Span<'src> {
-    /// Creates a new `Span` from a file. This span will start and end at the 0th character, making it have a length of zero.
+    /// Creates a new `Span` from a source. This span will start and end at the 0th character, making it have a length of zero.
     ///
     /// # Examples
     /// ```
-    /// use escoop::span::Span;
+    /// use escoop::{span::Span, Source};
     ///
     /// let file = "foo bar baz";
-    /// let mut span = Span::new(file);
+    /// let src = Source::new(file, "test.txt");
+    /// let mut span = Span::new(&src);
     /// span.grow_front(3);
-    /// assert_eq!(span.apply(file), "foo");
+    /// assert_eq!(span.apply(), "foo");
     /// ```
     pub fn new(src: &'src Source<&'src str>) -> Self {
         Self::new_from(src, 0, 0)
@@ -35,18 +34,15 @@ impl<'src> Span<'src> {
     ///
     /// # Examples
     /// ```
-    /// use escoop::span::Span;
+    /// use escoop::{span::Span, Source};
     ///
     /// let file = "foo bar baz";
-    /// let span = Span::new_from(file, 4, 7);
-    /// assert_eq!(span.apply(file), "bar");
+    /// let src = Source::new(file, "test.txt");
+    /// let span = Span::new_from(&src, 4, 7);
+    /// assert_eq!(span.apply(), "bar");
     /// ```
     pub fn new_from(src: &'src Source<&'src str>, start: u32, end: u32) -> Self {
-        Span {
-            start,
-            end,
-            src,
-        }
+        Span { start, end, src }
     }
 
     pub(crate) fn update(&mut self) {
@@ -57,13 +53,14 @@ impl<'src> Span<'src> {
     ///
     /// # Examples
     /// ```
-    /// use escoop::span::Span;
+    /// use escoop::{span::Span, Source};
     ///
     /// let file = "foo bar baz";
-    /// let mut span = Span::new_from(file, 4, 5);
-    /// assert_eq!(span.apply(file), "b");
+    /// let src = Source::new(file, "test.txt");
+    /// let mut span = Span::new_from(&src, 4, 5);
+    /// assert_eq!(span.apply(), "b");
     /// span.grow_front(2);
-    /// assert_eq!(span.apply(file), "bar");
+    /// assert_eq!(span.apply(), "bar");
     /// ```
     pub fn grow_front(&mut self, amount: u32) {
         self.end += amount;
@@ -73,13 +70,14 @@ impl<'src> Span<'src> {
     ///
     /// # Examples
     /// ```
-    /// use escoop::span::Span;
+    /// use escoop::{span::Span, Source};
     ///
     /// let file = "foo bar baz";
-    /// let mut span = Span::new_from(file, 6, 7);
-    /// assert_eq!(span.apply(file), "r");
+    /// let src = Source::new(file, "test.txt");
+    /// let mut span = Span::new_from(&src, 6, 7);
+    /// assert_eq!(span.apply(), "r");
     /// span.grow_back(2);
-    /// assert_eq!(span.apply(file), "bar");
+    /// assert_eq!(span.apply(), "bar");
     /// ```
     pub fn grow_back(&mut self, amount: u32) {
         self.start -= amount;
@@ -92,13 +90,14 @@ impl<'src> Span<'src> {
     ///
     /// # Examples
     /// ```
-    /// use escoop::span::Span;
+    /// use escoop::{span::Span, Source};
     ///
     /// let file = "foo bar baz";
-    /// let mut span = Span::new_from(file, 2, 7);
-    /// assert_eq!(span.apply(file), "o bar");
+    /// let src = Source::new(file, "test.txt");
+    /// let mut span = Span::new_from(&src, 2, 7);
+    /// assert_eq!(span.apply(), "o bar");
     /// span.shrink_back(2);
-    /// assert_eq!(span.apply(file), "bar");
+    /// assert_eq!(span.apply(), "bar");
     /// ```
     pub fn shrink_back(&mut self, amount: u32) {
         if self.len() < amount {
@@ -114,13 +113,14 @@ impl<'src> Span<'src> {
     ///
     /// # Examples
     /// ```
-    /// use escoop::span::Span;
+    /// use escoop::{span::Span, Source};
     ///
     /// let file = "foo bar baz";
-    /// let mut span = Span::new_from(file, 4, 9);
-    /// assert_eq!(span.apply(file), "bar b");
+    /// let src = Source::new(file, "test.txt");
+    /// let mut span = Span::new_from(&src, 4, 9);
+    /// assert_eq!(span.apply(), "bar b");
     /// span.shrink_front(2);
-    /// assert_eq!(span.apply(file), "bar");
+    /// assert_eq!(span.apply(), "bar");
     /// ```
     pub fn shrink_front(&mut self, amount: u32) {
         if self.len() < amount {
@@ -133,10 +133,11 @@ impl<'src> Span<'src> {
     ///
     /// # Examples
     /// ```
-    /// use escoop::span::Span;
+    /// use escoop::{span::Span, Source};
     ///
     /// let file = "foo bar baz";
-    /// let span = Span::new_from(file, 4, 4);
+    /// let src = Source::new(file, "test.txt");
+    /// let span = Span::new_from(&src, 4, 4);
     /// assert!(span.is_empty());
     /// ```
     pub fn is_empty(&self) -> bool {
@@ -147,10 +148,11 @@ impl<'src> Span<'src> {
     ///
     /// # Examples
     /// ```
-    /// use escoop::span::Span;
+    /// use escoop::{span::Span, Source};
     ///
     /// let file = "foo bar baz";
-    /// let span = Span::new_from(file, 4, 6);
+    /// let src = Source::new(file, "test.txt");
+    /// let span = Span::new_from(&src, 4, 6);
     /// assert_eq!(span.len(), 2);
     /// ```
     pub fn len(&self) -> u32 {
@@ -164,28 +166,21 @@ impl<'src> Span<'src> {
     ///
     /// # Examples
     /// ```
-    /// use escoop::span::Span;
+    /// use escoop::{span::Span, Source};
     ///
     /// let file = "foo bar baz";
-    /// let span = Span::new_from(file, 8, 11);
-    /// assert_eq!(span.apply(file), "baz");
+    /// let src = Source::new(file, "test.txt");
+    /// let span = Span::new_from(&src, 8, 11);
+    /// assert_eq!(span.apply(), "baz");
     /// ```
     ///
     /// ```should_panic
-    /// use escoop::span::Span;
-    ///
-    /// let file = "foo bar baz";
-    /// let span = Span::new_from(file, 8, 11);
-    /// let file2 = "baz qux foo";
-    /// span.apply(file2); // Panics
-    /// ```
-    ///
-    /// ```should_panic
-    /// use escoop::span::Span;
+    /// use escoop::{span::Span, Source};
     ///
     /// let file = "foo bar";
-    /// let span = Span::new_from(file, 8, 11);
-    /// span.apply(file); // Panics
+    /// let src = Source::new(file, "test.txt");
+    /// let span = Span::new_from(&src, 8, 11);
+    /// span.apply(); // Panics
     /// ```
     pub fn apply(&self) -> &'src str {
         self.try_apply().expect("span is not contained in file")
@@ -199,30 +194,23 @@ impl<'src> Span<'src> {
     /// # Examples
     ///
     /// ```
-    /// use escoop::span::Span;
+    /// use escoop::{span::Span, Source};
     ///
     /// let file = "foo bar baz";
-    /// let span = Span::new_from(file, 8, 11);
-    /// assert_eq!(span.try_apply(file), Some("baz"));
+    /// let src = Source::new(file, "test.txt");
+    /// let span = Span::new_from(&src, 8, 11);
+    /// assert_eq!(span.try_apply(), Some("baz"));
     /// ```
     ///
     /// ```
-    /// use escoop::span::Span;
-    ///
-    /// let file = "foo bar baz";
-    /// let span = Span::new_from(file, 8, 11);
-    /// let file2 = "baz qux foo";
-    /// assert_eq!(span.try_apply(file2), None);
-    /// ```
-    ///
-    /// ```
-    /// use escoop::span::Span;
+    /// use escoop::{span::Span, Source};
     ///
     /// let file = "foo bar";
-    /// let span = Span::new_from(file, 8, 11);
-    /// assert_eq!(span.try_apply(file), None);
+    /// let src = Source::new(file, "test.txt");
+    /// let span = Span::new_from(&src, 8, 11);
+    /// assert_eq!(span.try_apply(), None);
     pub fn try_apply(&self) -> Option<&'src str> {
-        if self.src.1.len() >= self.end as usize {
+        if self.src.source.len() >= self.end as usize {
             Some(self.apply_unchecked())
         } else {
             None
@@ -230,11 +218,12 @@ impl<'src> Span<'src> {
     }
 
     fn apply_unchecked(&self) -> &'src str {
-        &self.src.1.text()[self.start as usize..self.end as usize]
+        &self.src.source[self.start as usize..self.end as usize]
     }
 
-    fn get_start_code_pos(&self) -> (u32, u32) {
-        let src = self.src.1.chars();
+    /// Gets a tuple of `(line, column)` for the start of the `Span`.
+    pub fn get_start_code_pos(&self) -> (u32, u32) {
+        let src = self.src.source.chars();
         let mut column = 1;
         let mut line = 1;
         for i in src.enumerate() {
@@ -252,8 +241,9 @@ impl<'src> Span<'src> {
         (line, column)
     }
 
-    fn get_end_code_pos(&self) -> (u32, u32) {
-        let src = self.src.1.chars();
+    /// Gets a tuple of `(line, column)` for the end of the `Span`.
+    pub fn get_end_code_pos(&self) -> (u32, u32) {
+        let src = self.src.source.chars();
         let mut column = 1;
         let mut line = 1;
         for i in src.enumerate() {
@@ -272,27 +262,17 @@ impl<'src> Span<'src> {
     }
 }
 
+impl<'src> From<Span<'src>> for Range<usize> {
+    fn from(val: Span<'src>) -> Self {
+        val.start as usize..val.end as usize
+    }
+}
+
 impl<'src> Display for Span<'src> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let name = self.src.path().as_os_str().to_string_lossy();
         let (line, column) = self.get_start_code_pos();
         write!(f, "{name}:")?;
         write!(f, "{line}:{column}")
-    }
-}
-
-impl<'src> AriadneSpan for Span<'src> {
-    type SourceId = ();
-
-    fn source(&self) -> &Self::SourceId {
-        &()
-    }
-
-    fn start(&self) -> usize {
-        self.start as usize
-    }
-
-    fn end(&self) -> usize {
-        self.end as usize
     }
 }
