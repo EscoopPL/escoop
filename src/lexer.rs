@@ -5,7 +5,7 @@ use std::fmt::Display;
 
 use codespan_reporting::diagnostic::Label;
 
-use crate::{diag::Diag, span::Span, Cursor, Source};
+use crate::{Cursor, Source, diag::Diag, span::Span};
 
 /// Enumeration of every possible type of [`Token`]
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -224,11 +224,11 @@ impl<'src> Iterator for Lexer<'src> {
                     .finish()
                     .finish()
                     .emit();*/
-                    Diag::error(&self.src).with_message("unterminated string")
-                    .with_label(
-                        Label::primary((), self.span)
-                    )
-                    .finish().emit();
+                    Diag::error(&self.src)
+                        .with_message("unterminated string")
+                        .with_label(Label::primary((), self.span))
+                        .finish()
+                        .emit();
                 }
                 self.next_char();
                 make_token!(self, TokenType::StringLit, LexerValue::String(string))
@@ -299,11 +299,11 @@ impl<'src> Iterator for Lexer<'src> {
                 }
             }
             c => {
-                Diag::error(&self.src).with_message(format!("unknown character `{c}`"))
-                .with_label(
-                    Label::primary((), self.span)
-                )
-                .finish().emit();
+                Diag::error(&self.src)
+                    .with_message(format!("unknown character `{c}`"))
+                    .with_label(Label::primary((), self.span))
+                    .finish()
+                    .emit();
                 None
             }
         }

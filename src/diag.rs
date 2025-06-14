@@ -3,7 +3,10 @@
 
 use std::{mem, sync::OnceLock};
 
-use codespan_reporting::{diagnostic::{Diagnostic, Label, Severity}, term};
+use codespan_reporting::{
+    diagnostic::{Diagnostic, Label, Severity},
+    term,
+};
 use termcolor::{ColorChoice, StandardStream};
 
 use crate::Source;
@@ -43,7 +46,7 @@ impl<'src> Diag<'src> {
             inner: Diag {
                 report: Diagnostic::new(severity),
                 src,
-            }
+            },
         }
     }
 
@@ -97,16 +100,16 @@ pub struct DiagBuilder<'src> {
 impl<'src> DiagBuilder<'src> {
     /// Calls [`codespan_reporting::Diagnostic::with_code`](Diagnostic::with_code)
     pub fn with_code(mut self, code: impl ToString) -> Self {
-        let report = mem::replace(&mut self.inner.report, Diagnostic::new(Severity::Bug))
-            .with_code(code); // Using a cool mem::replace trick from GitHub Copilot
+        let report =
+            mem::replace(&mut self.inner.report, Diagnostic::new(Severity::Bug)).with_code(code); // Using a cool mem::replace trick from GitHub Copilot
         self.inner.report = report;
         self
     }
 
     /// Calls [`codespan_reporting::Diagnostic::with_label`](Diagnostic::with_label)
     pub fn with_label(mut self, label: Label<()>) -> Self {
-        let report = mem::replace(&mut self.inner.report, Diagnostic::new(Severity::Bug))
-            .with_label(label); // Using a cool mem::replace trick from GitHub Copilot
+        let report =
+            mem::replace(&mut self.inner.report, Diagnostic::new(Severity::Bug)).with_label(label); // Using a cool mem::replace trick from GitHub Copilot
         self.inner.report = report;
         self
     }
@@ -137,16 +140,16 @@ impl<'src> DiagBuilder<'src> {
 
     /// Calls [`codespan_reporting::Diagnostic::with_note`](Diagnostic::with_note)
     pub fn with_note(mut self, note: impl ToString) -> Self {
-        let report = mem::replace(&mut self.inner.report, Diagnostic::new(Severity::Bug))
-            .with_note(note); // Using a cool mem::replace trick from GitHub Copilot
+        let report =
+            mem::replace(&mut self.inner.report, Diagnostic::new(Severity::Bug)).with_note(note); // Using a cool mem::replace trick from GitHub Copilot
         self.inner.report = report;
         self
     }
 
     /// Calls [`codespan_reporting::Diagnostic::with_notes`](Diagnostic::with_notes)
     pub fn with_notes(mut self, notes: Vec<String>) -> Self {
-        let report = mem::replace(&mut self.inner.report, Diagnostic::new(Severity::Bug))
-            .with_notes(notes); // Using a cool mem::replace trick from GitHub Copilot
+        let report =
+            mem::replace(&mut self.inner.report, Diagnostic::new(Severity::Bug)).with_notes(notes); // Using a cool mem::replace trick from GitHub Copilot
         self.inner.report = report;
         self
     }

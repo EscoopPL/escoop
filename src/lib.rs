@@ -78,20 +78,20 @@ impl<I: AsRef<str>> Source<I> {
     }
 
     fn line_start(&self, line_index: usize) -> Result<usize, files::Error> {
-            use core::cmp::Ordering;
-    
-            match line_index.cmp(&self.line_starts.len()) {
-                Ordering::Less => Ok(self
-                    .line_starts
-                    .get(line_index)
-                    .cloned()
-                    .expect("failed despite previous check")),
-                Ordering::Equal => Ok(self.source.as_ref().len()),
-                Ordering::Greater => Err(files::Error::LineTooLarge {
-                    given: line_index,
-                    max: self.line_starts.len() - 1,
-                }),
-            }
+        use core::cmp::Ordering;
+
+        match line_index.cmp(&self.line_starts.len()) {
+            Ordering::Less => Ok(self
+                .line_starts
+                .get(line_index)
+                .cloned()
+                .expect("failed despite previous check")),
+            Ordering::Equal => Ok(self.source.as_ref().len()),
+            Ordering::Greater => Err(files::Error::LineTooLarge {
+                given: line_index,
+                max: self.line_starts.len() - 1,
+            }),
+        }
     }
 }
 
@@ -126,7 +126,6 @@ impl<'a, I: AsRef<str> + 'a> Files<'a> for Source<I> {
         let next_line_start = self.line_start(line_index + 1)?;
 
         Ok(line_start..next_line_start)
-
     }
 }
 

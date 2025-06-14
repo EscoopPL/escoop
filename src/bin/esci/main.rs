@@ -22,9 +22,9 @@ enum DebugMode {
 
 fn main() {
     let args = Args::parse();
-    let path = args
-        .file
-        .unwrap_or(PathBuf::from("escoop-tests/hello-world-simple/entrypoint.scp"));
+    let path = args.file.unwrap_or(PathBuf::from(
+        "escoop-tests/hello-world-simple/entrypoint.scp",
+    ));
     let file = match fs::read_to_string(&path) {
         Ok(file) => file,
         Err(err) => {
