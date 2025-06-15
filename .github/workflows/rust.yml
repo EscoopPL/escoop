@@ -10,8 +10,31 @@ env:
   CARGO_TERM_COLOR: always
 
 jobs:
-  check:
+  cleanup-cache:
+    runs-on: ubuntu-latest
 
+    permissions:
+      actions: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Clear unneeded cache
+        run: |
+          unusedCacheKeys=$(gh cache list --json key --jq '.[].key|(if endswith("${{ hashFiles('Cargo.lock') }}") then null else . end)')
+
+          set +e
+          echo "Deleting caches..."
+          for cacheKey in $unusedCacheKeys
+          do
+              gh cache delete $cacheKey
+          done
+          echo "Done"
+
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  check:
     defaults:
       run:
         shell: bash
@@ -28,7 +51,7 @@ jobs:
           ~/.cargo/registry/cache/
           ~/.cargo/git/db/
           target/
-        key: ${{ runner.os }}-${{ runner.arch }}-cargo-${{ hashFiles('Cargo.lock') }}
+        key: ${{ runner.os }}-${{ runner.arch }}-check-cargo-${{ hashFiles('Cargo.lock') }}
     - name: Install Rust
       run: |
         which cargo || rm -rf $HOME/.rustup | rm -rf $HOME/.cargo | curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
@@ -37,11 +60,16 @@ jobs:
       run: cargo clippy --verbose --release
     - name: Verify formatting
       run: cargo fmt --check --verbose
-    - name: Run tests
-      run: cargo test --verbose --release
 
   build_linux:
     runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        toolchain:
+          - stable
+          - beta
+          - nightly
 
     defaults:
       run:
@@ -57,21 +85,34 @@ jobs:
           ~/.cargo/registry/cache/
           ~/.cargo/git/db/
           target/
-        key: ${{ runner.os }}-${{ runner.arch }}-cargo-${{ hashFiles('Cargo.lock') }}
+        key: ${{ runner.os }}-${{ runner.arch }}-${{ matrix.toolchain }}-cargo-${{ hashFiles('Cargo.lock') }}
     - name: Install Rust
       run: |
         which cargo || rm -rf $HOME/.rustup | rm -rf $HOME/.cargo | curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
         source $HOME/.cargo/env
+    - name: Set toolchain
+      run: |
+        rustup default ${{ matrix.toolchain }}
+        rustup update ${{ matrix.toolchain }}
     - name: Build code on Linux
       run: cargo build --verbose --release
+    - name: Run tests on Linux
+      run: cargo test --verbose --release
     - uses: actions/upload-artifact@v4
       with:
-        name: linux-esci
+        name: linux-esci-${{ matrix.toolchain }}
         path: target/release/esci
 
   build_windows:
     runs-on: windows-latest
 
+    strategy:
+      matrix:
+        toolchain:
+          - stable
+          - beta
+          - nightly
+
     defaults:
       run:
         shell: bash
@@ -86,21 +127,34 @@ jobs:
           ~/.cargo/registry/cache/
           ~/.cargo/git/db/
           target/
-        key: ${{ runner.os }}-${{ runner.arch }}-cargo-${{ hashFiles('Cargo.lock') }}
+        key: ${{ runner.os }}-${{ runner.arch }}-${{ matrix.toolchain }}-cargo-${{ hashFiles('Cargo.lock') }}
     - name: Install Rust
       run: |
         which cargo || rm -rf $HOME/.rustup | rm -rf $HOME/.cargo | curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
         export PATH="$HOME/.cargo/bin:$PATH"
+    - name: Set toolchain
+      run: |
+        rustup default ${{ matrix.toolchain }}
+        rustup update ${{ matrix.toolchain }}
     - name: Build code on Windows
       run: cargo build --verbose --release
+    - name: Run tests on Windows
+      run: cargo test --verbose --release
     - uses: actions/upload-artifact@v4
       with:
-        name: windows-esci
+        name: windows-esci-${{ matrix.toolchain }}
         path: target/release/esci.exe
 
   build_macos_silicon:
     runs-on: macos-latest
 
+    strategy:
+      matrix:
+        toolchain:
+          - stable
+          - beta
+          - nightly
+
     defaults:
       run:
         shell: bash
@@ -115,20 +169,33 @@ jobs:
           ~/.cargo/registry/cache/
           ~/.cargo/git/db/
           target/
-        key: ${{ runner.os }}-${{ runner.arch }}-cargo-${{ hashFiles('Cargo.lock') }}
+        key: ${{ runner.os }}-${{ runner.arch }}-${{ matrix.toolchain }}-cargo-${{ hashFiles('Cargo.lock') }}
     - name: Install Rust
       run: |
         which cargo || rm -rf $HOME/.rustup | rm -rf $HOME/.cargo | curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
         source $HOME/.cargo/env
+    - name: Set toolchain
+      run: |
+        rustup default ${{ matrix.toolchain }}
+        rustup update ${{ matrix.toolchain }}
     - name: Build code on MacOS Silicon
       run: cargo build --verbose --release
+    - name: Run tests on MacOS Silicon
+      run: cargo test --verbose --release
     - uses: actions/upload-artifact@v4
       with:
-        name: macos-silicon-esci
+        name: macos-silicon-esci-${{ matrix.toolchain }}
         path: target/release/esci
 
   build_macos_intel:
     runs-on: macos-13
+
+    strategy:
+      matrix:
+        toolchain:
+          - stable
+          - beta
+          - nightly
 
     steps:
     - uses: actions/checkout@v4
@@ -140,14 +207,20 @@ jobs:
           ~/.cargo/registry/cache/
           ~/.cargo/git/db/
           target/
-        key: ${{ runner.os }}-${{ runner.arch }}-cargo-${{ hashFiles('Cargo.lock') }}
+        key: ${{ runner.os }}-${{ runner.arch }}-${{ matrix.toolchain }}-cargo-${{ hashFiles('Cargo.lock') }}
     - name: Install Rust
       run: |
         which cargo || rm -rf $HOME/.rustup | rm -rf $HOME/.cargo | curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
         source $HOME/.cargo/env
+    - name: Set toolchain
+      run: |
+        rustup default ${{ matrix.toolchain }}
+        rustup update ${{ matrix.toolchain }}
     - name: Build code on MacOS Intel
       run: cargo build --verbose --release
+    - name: Run tests on MacOS Intel
+      run: cargo test --verbose --release
     - uses: actions/upload-artifact@v4
       with:
-        name: macos-intel-esci
+        name: macos-intel-esci-${{ matrix.toolchain }}
         path: target/release/esci
