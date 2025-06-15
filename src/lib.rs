@@ -1,12 +1,15 @@
 #![deny(deprecated)]
 
-use std::{borrow::Cow, collections::VecDeque, fmt::Debug, ops::Range, path::PathBuf, str::Bytes};
+use std::{collections::VecDeque, fmt::Debug, str::Bytes};
 
-use codespan_reporting::files::{self, Error, Files};
+use codespan_reporting::files::{self};
+
+use crate::query::{__Source, Database, QueryValue};
 
 pub mod diag;
 pub mod lexer;
 pub mod parser;
+pub mod query;
 pub mod span;
 
 struct Cursor<'a> {
@@ -56,80 +59,43 @@ impl<'a> Iterator for Cursor<'a> {
     }
 }
 
-#[derive(Clone, PartialEq, Eq, Hash)]
-pub struct Source<I: AsRef<str> = String> {
-    path: PathBuf,
-    source: I,
-    line_starts: Vec<usize>,
-}
+#[derive(Clone, Copy, PartialEq, Eq, Hash)]
+pub struct Source(u32);
 
-impl<I: AsRef<str>> Source<I> {
-    pub(crate) fn path(&self) -> &PathBuf {
-        &self.path
+impl Source {
+    pub(crate) fn name<'db>(&self, db: &'db Database) -> &'db str {
+        match db.get(self.0).unwrap() {
+            QueryValue::Source(val) => &val.name,
+            _ => panic!(),
+        }
     }
 
-    pub fn new(source: I, path: impl Into<PathBuf>) -> Self {
-        let line_starts = files::line_starts(source.as_ref()).collect();
-        Source {
-            path: path.into(),
-            source,
+    pub(crate) fn contents<'db>(&self, db: &'db Database) -> &'db str {
+        match db.get(self.0).unwrap() {
+            QueryValue::Source(val) => &val.contents,
+            _ => panic!(),
+        }
+    }
+
+    pub(crate) fn line_starts<'db>(&self, db: &'db Database) -> &'db Vec<usize> {
+        match db.get(self.0).unwrap() {
+            QueryValue::Source(val) => &val.line_starts,
+            _ => panic!(),
+        }
+    }
+
+    pub fn new(db: &mut Database, source: impl ToString, path: impl ToString) -> Self {
+        let line_starts = files::line_starts(source.to_string().as_str()).collect();
+        let __source = __Source {
+            name: path.to_string(),
+            contents: source.to_string(),
             line_starts,
-        }
-    }
-
-    fn line_start(&self, line_index: usize) -> Result<usize, files::Error> {
-        use core::cmp::Ordering;
-
-        match line_index.cmp(&self.line_starts.len()) {
-            Ordering::Less => Ok(self
-                .line_starts
-                .get(line_index)
-                .cloned()
-                .expect("failed despite previous check")),
-            Ordering::Equal => Ok(self.source.as_ref().len()),
-            Ordering::Greater => Err(files::Error::LineTooLarge {
-                given: line_index,
-                max: self.line_starts.len() - 1,
-            }),
-        }
+        };
+        Source(db.create(QueryValue::Source(__source)))
     }
 }
 
-impl<'a, I: AsRef<str> + 'a> Files<'a> for Source<I> {
-    type FileId = ();
-
-    type Name = Cow<'a, str>;
-
-    type Source = &'a I;
-
-    fn name(&'a self, _: Self::FileId) -> Result<Self::Name, codespan_reporting::files::Error> {
-        Ok(self.path.as_os_str().to_string_lossy())
-    }
-
-    fn source(&'a self, _: Self::FileId) -> Result<Self::Source, codespan_reporting::files::Error> {
-        Ok(&self.source)
-    }
-
-    fn line_index(
-        &'a self,
-        _: Self::FileId,
-        byte_index: usize,
-    ) -> Result<usize, codespan_reporting::files::Error> {
-        Ok(self
-            .line_starts
-            .binary_search(&byte_index)
-            .unwrap_or_else(|next_line| next_line - 1))
-    }
-
-    fn line_range(&self, (): (), line_index: usize) -> Result<Range<usize>, Error> {
-        let line_start = self.line_start(line_index)?;
-        let next_line_start = self.line_start(line_index + 1)?;
-
-        Ok(line_start..next_line_start)
-    }
-}
-
-impl<I: AsRef<str>> Debug for Source<I> {
+impl Debug for Source {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "<Source>")
     }
