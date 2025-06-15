@@ -1,40 +1,28 @@
-identifier hello-world-v3.entrypoint
-
-comp text is
-    string value
-
-    construct string value is
-        self.value = value
-    end
-
-    func string get-text is
-        return value
-    end
+// Function defintion. start() function is the first function ran.
+func void start() is
+	printer hello-world = printer // Constructor. Only allowed because all fields have default values.
+	hello-world.add('Hello, ')
+	hello-world.add('World!')
+	hello-world.print-contents()
+	drop(hello-world)
+	printer user-input = printer
+	string input = user-input()
+	hello-world.add('User Input: ')
+	hello-world.add(input)
+	hello-world.print-contents()
 end
 
 obj printer is
-    component-list[text] msgs
-
-    // Lack of construct, default used
-
-    func void add-msg text msg is
-        call msgs.add msg
-    end
-
-    func void print is
-        call bulk func void string i is
-            call print i
-            call print ' '
-        end msgs
-    end
+	text: array = [],
 end
 
-func void start is
-    printer hello-world-printer = printer
-    array[string] hello-world = ['hello,', 'world!']
-    array[text] hello-world-comp = call bulk func string string i is
-        return text i
-    end hello-world
-    call bulk hello-world-printer.add hello-world-comp
-    call hello-world-printer.print
+impl printer is
+	pub func add(text: string) is
+		self.text.push(text)
+	end
+end
+
+pub func print-contents() is
+	bulk print(self.text)
+	println()
 end
