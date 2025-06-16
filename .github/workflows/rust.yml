@@ -61,7 +61,7 @@ jobs:
     - name: Verify formatting
       run: cargo fmt --check --verbose
 
-  build_linux:
+  build_linux_x86:
     runs-on: ubuntu-latest
 
     strategy:
@@ -103,8 +103,92 @@ jobs:
         name: linux-esci-${{ matrix.toolchain }}
         path: target/release/esci
 
-  build_windows:
+  build_windows_x86:
     runs-on: windows-latest
+
+    strategy:
+      matrix:
+        toolchain:
+          - stable
+          - beta
+          - nightly
+
+    defaults:
+      run:
+        shell: bash
+
+    steps:
+    - uses: actions/checkout@v4
+    - uses: actions/cache@v4
+      with:
+        path: |
+          ~/.cargo/bin/
+          ~/.cargo/registry/index/
+          ~/.cargo/registry/cache/
+          ~/.cargo/git/db/
+          target/
+        key: ${{ runner.os }}-${{ runner.arch }}-${{ matrix.toolchain }}-cargo-${{ hashFiles('Cargo.lock') }}
+    - name: Install Rust
+      run: |
+        which cargo || rm -rf $HOME/.rustup | rm -rf $HOME/.cargo | curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+        export PATH="$HOME/.cargo/bin:$PATH"
+    - name: Set toolchain
+      run: |
+        rustup default ${{ matrix.toolchain }}
+        rustup update ${{ matrix.toolchain }}
+    - name: Build code on Windows
+      run: cargo build --verbose --release
+    - name: Run tests on Windows
+      run: cargo test --verbose --release
+    - uses: actions/upload-artifact@v4
+      with:
+        name: windows-esci-${{ matrix.toolchain }}
+        path: target/release/esci.exe
+  
+  build_linux_arm:
+    runs-on: ubuntu-24.04-arm
+
+    strategy:
+      matrix:
+        toolchain:
+          - stable
+          - beta
+          - nightly
+
+    defaults:
+      run:
+        shell: bash
+
+    steps:
+    - uses: actions/checkout@v4
+    - uses: actions/cache@v4
+      with:
+        path: |
+          ~/.cargo/bin/
+          ~/.cargo/registry/index/
+          ~/.cargo/registry/cache/
+          ~/.cargo/git/db/
+          target/
+        key: ${{ runner.os }}-${{ runner.arch }}-${{ matrix.toolchain }}-cargo-${{ hashFiles('Cargo.lock') }}
+    - name: Install Rust
+      run: |
+        which cargo || rm -rf $HOME/.rustup | rm -rf $HOME/.cargo | curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+        source $HOME/.cargo/env
+    - name: Set toolchain
+      run: |
+        rustup default ${{ matrix.toolchain }}
+        rustup update ${{ matrix.toolchain }}
+    - name: Build code on Linux
+      run: cargo build --verbose --release
+    - name: Run tests on Linux
+      run: cargo test --verbose --release
+    - uses: actions/upload-artifact@v4
+      with:
+        name: linux-esci-${{ matrix.toolchain }}
+        path: target/release/esci
+
+  build_windows_arm:
+    runs-on: windows-11-arm
 
     strategy:
       matrix:
