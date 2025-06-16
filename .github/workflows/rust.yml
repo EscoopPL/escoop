@@ -27,6 +27,7 @@ jobs:
           echo "Deleting caches..."
           for cacheKey in $unusedCacheKeys
           do
+              echo "Deleting cache: $cacheKey"
               gh cache delete $cacheKey
           done
           echo "Done"
