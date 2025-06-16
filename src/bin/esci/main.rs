@@ -1,7 +1,7 @@
 use std::{fs, path::PathBuf};
 
 use clap::{Parser as ClapParser, ValueEnum};
-use escoop::{Source, lexer::Lexer};
+use escoop::{lexer::Lexer, parser::Parser, Source};
 
 #[derive(ClapParser)]
 struct Args {
@@ -21,6 +21,7 @@ struct Args {
 #[derive(Debug, Copy, Clone, PartialEq, Eq, ValueEnum)]
 enum DebugMode {
     Lexer,
+    Parser,
 }
 
 fn main() {
@@ -53,6 +54,22 @@ fn main() {
         } else {
             let lexer = Lexer::new(&src);
             for i in lexer {
+                println!("{:?}", i);
+            }
+        }
+    }
+
+    if matches!(args.debug, Some(DebugMode::Parser)) {
+        if args.profiling {
+            for _ in 0..1000000 {
+                let mut parser = Parser::new(&src);
+                for _ in parser.parse() {
+                    //println!("{:?}", i);
+                }
+            }
+        } else {
+            let mut parser = Parser::new(&src);
+            for i in parser.parse() {
                 println!("{:?}", i);
             }
         }

@@ -115,6 +115,7 @@ version = "0.1.0"
 dependencies = [
  "clap",
  "codespan-reporting",
+ "peek-again",
  "termcolor",
 ]
 
@@ -135,6 +136,12 @@ name = "once_cell_polyfill"
 version = "1.70.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a4895175b425cb1f87721b59f0f286c2092bd4af812243672510e1ac53e2e0ad"
+
+[[package]]
+name = "peek-again"
+version = "0.4.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "71871546f8c0f4b6260d060a5f4c3143d42bc4e03373c4adae0a41a0fa61b580"
 
 [[package]]
 name = "proc-macro2"
