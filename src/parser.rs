@@ -1,15 +1,13 @@
 use peek_again::Peekable;
 
-use crate::{lexer::Lexer, Source};
+use crate::{Source, lexer::Lexer};
 
 pub struct Parser<'src> {
-    lexer: Peekable<Lexer<'src>>
+    lexer: Peekable<Lexer<'src>>,
 }
 
 #[derive(Debug)]
-pub enum Declaration {
-
-}
+pub enum Declaration {}
 
 impl<'src> Parser<'src> {
     pub fn new(src: &'src Source<'src>) -> Self {

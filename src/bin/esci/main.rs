@@ -1,7 +1,7 @@
 use std::{fs, path::PathBuf};
 
 use clap::{Parser as ClapParser, ValueEnum};
-use escoop::{lexer::Lexer, parser::Parser, Source};
+use escoop::{Source, lexer::Lexer, parser::Parser};
 
 #[derive(ClapParser)]
 struct Args {
