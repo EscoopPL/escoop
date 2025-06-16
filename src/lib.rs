@@ -1,6 +1,6 @@
 #![deny(deprecated)]
 
-use std::{borrow::Cow, fmt::Debug, iter::Peekable, ops::Range, path::PathBuf, str::Bytes};
+use std::{borrow::Cow, fmt::Debug, ops::Range, path::PathBuf};
 
 use codespan_reporting::files::{self, Error, Files};
 
@@ -8,42 +8,6 @@ pub mod diag;
 pub mod lexer;
 pub mod parser;
 pub mod span;
-
-struct Cursor<'a> {
-    len_remaining: usize,
-    source: Peekable<Bytes<'a>>,
-}
-
-impl<'a> Cursor<'a> {
-    fn new(source: &'a str) -> Self {
-        let bytes = source.bytes().peekable();
-        Cursor {
-            len_remaining: source.len(),
-            source: bytes,
-        }
-    }
-
-    #[inline]
-    fn eof(&self) -> bool {
-        self.len_remaining == 0
-    }
-
-    #[inline]
-    fn peek(&mut self) -> Option<u8> {
-        self.source.peek().copied()
-    }
-}
-
-impl<'a> Iterator for Cursor<'a> {
-    type Item = u8;
-
-    #[inline]
-    fn next(&mut self) -> Option<Self::Item> {
-        self.source.next().inspect(|_| {
-            self.len_remaining -= 1; // This will only run if it can be unwrapped
-        })
-    }
-}
 
 #[derive(Clone, PartialEq, Eq, Hash)]
 pub struct Source<'src> {
@@ -122,36 +86,6 @@ impl<'src> Debug for Source<'src> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "<Source>")
     }
-}
-
-#[test]
-fn peek_test() {
-    let source = "Hello, this is a test!";
-    let mut cursor = Cursor::new(source);
-    assert_eq!(cursor.peek(), Some(b'H'));
-    assert_eq!(cursor.peek(), Some(b'H'));
-    assert_eq!(cursor.next(), Some(b'H'));
-    assert_eq!(cursor.peek(), Some(b'e'));
-    assert_eq!(cursor.next(), Some(b'e'));
-    assert_eq!(cursor.next(), Some(b'l'));
-    assert_eq!(cursor.next(), Some(b'l'));
-    assert_eq!(cursor.collect::<Vec<_>>(), b"o, this is a test!");
-}
-
-#[test]
-fn eof_test() {
-    let source = "Test";
-    let mut cursor = Cursor::new(source);
-    assert!(!cursor.eof());
-    cursor.next(); // T
-    assert!(!cursor.eof());
-    cursor.next(); // e
-    assert!(!cursor.eof());
-    cursor.next(); // s
-    assert!(!cursor.eof());
-    cursor.next(); // t
-    assert!(cursor.eof());
-    assert!(cursor.next().is_none()); // None
 }
 
 #[test]

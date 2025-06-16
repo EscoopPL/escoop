@@ -1,11 +1,11 @@
 #![deny(missing_docs)]
 //! Module for items related to lexical analysis of Escoop.
 
-use std::fmt::Display;
+use std::{fmt::Display, iter::Peekable, str::Bytes};
 
 use codespan_reporting::diagnostic::Label;
 
-use crate::{Cursor, Source, diag::Diag, span::Span};
+use crate::{Source, diag::Diag, span::Span};
 
 /// Enumeration of every possible type of [`Token`]
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -153,7 +153,7 @@ macro_rules! make_token {
 
 /// Escoop lexical analyzer. Turns a source file into tokens.
 pub struct Lexer<'src> {
-    cursor: Cursor<'src>,
+    source: Peekable<Bytes<'src>>,
     span: Span<'src>,
     src: Source<'src>,
 }
@@ -165,21 +165,21 @@ impl<'src> Lexer<'src> {
     pub fn new(src: &'src Source<'src>) -> Self {
         Lexer {
             src: src.clone(),
-            cursor: Cursor::new(src.source),
+            source: src.source.bytes().peekable(),
             span: Span::new(src),
         }
     }
 
     #[inline]
     fn next_char(&mut self) -> Option<u8> {
-        let next = self.cursor.next();
+        let next = self.source.next();
         self.span.grow_front(1);
         next
     }
 
     #[inline]
     fn peek_char(&mut self) -> Option<u8> {
-        self.cursor.peek()
+        self.source.peek().copied()
     }
 
     #[inline]
@@ -194,7 +194,7 @@ impl<'src> Lexer<'src> {
             if !char.is_ascii_whitespace() {
                 break;
             }
-            self.cursor.next();
+            self.source.next();
             next += 1;
         }
         self.span.grow_front(next);
@@ -203,8 +203,8 @@ impl<'src> Lexer<'src> {
 
     /// Checks if the `Lexer` is at the end of the source.
     #[inline]
-    pub fn eof(&self) -> bool {
-        self.cursor.eof()
+    pub fn eof(&mut self) -> bool {
+        self.source.peek().is_none()
     }
 }
 
@@ -221,7 +221,7 @@ impl<'src> Iterator for Lexer<'src> {
             b'\'' => {
                 let mut found = false;
                 let mut next = 0;
-                for c in self.cursor.by_ref() {
+                for c in self.source.by_ref() {
                     next += 1;
                     if c == b'\'' {
                         found = true;
@@ -338,15 +338,15 @@ impl<'src> Iterator for Lexer<'src> {
 fn whitespace_test() {
     let src = Source::new("Hello,  \nthis is a test.", "test.txt");
     let mut lexer = Lexer::new(&src);
-    lexer.cursor.next();
-    lexer.cursor.next();
-    lexer.cursor.next();
-    lexer.cursor.next();
-    lexer.cursor.next();
-    lexer.cursor.next(); // '  \nthis is a test.'
+    lexer.source.next();
+    lexer.source.next();
+    lexer.source.next();
+    lexer.source.next();
+    lexer.source.next();
+    lexer.source.next(); // '  \nthis is a test.'
     lexer.skip_whitespace();
-    assert_eq!(lexer.cursor.next(), Some(b't'));
-    assert_eq!(lexer.cursor.next(), Some(b'h'));
+    assert_eq!(lexer.source.next(), Some(b't'));
+    assert_eq!(lexer.source.next(), Some(b'h'));
 }
 
 #[test]
