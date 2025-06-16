@@ -9,6 +9,9 @@ struct Args {
     file: Option<PathBuf>,
 
     #[arg(short, long)]
+    profiling: bool,
+
+    #[arg(short, long)]
     verbose: bool,
 
     #[arg(short, long)]
@@ -22,9 +25,9 @@ enum DebugMode {
 
 fn main() {
     let args = Args::parse();
-    let path = args.file.unwrap_or(PathBuf::from(
-        "escoop-tests/hello-world-simple/entrypoint.scp",
-    ));
+    let path = args
+        .file
+        .unwrap_or(PathBuf::from("escoop-tests/hello-world/entrypoint.scp"));
     let file = match fs::read_to_string(&path) {
         Ok(file) => file,
         Err(err) => {
@@ -38,11 +41,20 @@ fn main() {
     };
 
     let src = Source::new(file.as_str(), path);
-    let lexer = Lexer::new(&src);
 
     if matches!(args.debug, Some(DebugMode::Lexer)) {
-        for i in lexer {
-            println!("{i:?}");
+        if args.profiling {
+            for _ in 0..1000000 {
+                let lexer = Lexer::new(&src);
+                for _ in lexer {
+                    //println!("{:?}", i);
+                }
+            }
+        } else {
+            let lexer = Lexer::new(&src);
+            for i in lexer {
+                println!("{:?}", i);
+            }
         }
     }
 }

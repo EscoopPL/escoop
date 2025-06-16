@@ -1,6 +1,6 @@
 #![deny(deprecated)]
 
-use std::{borrow::Cow, collections::VecDeque, fmt::Debug, ops::Range, path::PathBuf, str::Bytes};
+use std::{borrow::Cow, fmt::Debug, iter::Peekable, ops::Range, path::PathBuf, str::Bytes};
 
 use codespan_reporting::files::{self, Error, Files};
 
@@ -11,65 +11,54 @@ pub mod span;
 
 struct Cursor<'a> {
     len_remaining: usize,
-    source: Bytes<'a>,
-    peeks: VecDeque<Option<char>>,
+    source: Peekable<Bytes<'a>>,
 }
 
 impl<'a> Cursor<'a> {
     fn new(source: &'a str) -> Self {
-        let bytes = source.bytes();
+        let bytes = source.bytes().peekable();
         Cursor {
             len_remaining: source.len(),
             source: bytes,
-            peeks: VecDeque::new(),
         }
     }
 
+    #[inline]
     fn eof(&self) -> bool {
         self.len_remaining == 0
     }
 
-    fn peek(&mut self) -> Option<char> {
-        if let Some(char) = self.peeks.front() {
-            *char
-        } else {
-            self.peeks.push_back(self.source.next().map(|x| x as char));
-            self.peeks[0] // Should be able to be used
-        }
+    #[inline]
+    fn peek(&mut self) -> Option<u8> {
+        self.source.peek().copied()
     }
 }
 
 impl<'a> Iterator for Cursor<'a> {
-    type Item = char;
+    type Item = u8;
 
+    #[inline]
     fn next(&mut self) -> Option<Self::Item> {
-        if self.len_remaining == 0 {
-            return None;
-        }
-
-        self.len_remaining -= 1;
-        if self.peeks.is_empty() {
-            self.source.next().map(|x| x as char)
-        } else {
-            self.peeks.pop_front().unwrap() // Just confirmed that self.peeks isn't empty
-        }
+        self.source.next().inspect(|_| {
+            self.len_remaining -= 1; // This will only run if it can be unwrapped
+        })
     }
 }
 
 #[derive(Clone, PartialEq, Eq, Hash)]
-pub struct Source<I: AsRef<str> = String> {
+pub struct Source<'src> {
     path: PathBuf,
-    source: I,
+    source: &'src str,
     line_starts: Vec<usize>,
 }
 
-impl<I: AsRef<str>> Source<I> {
+impl<'src> Source<'src> {
     pub(crate) fn path(&self) -> &PathBuf {
         &self.path
     }
 
-    pub fn new(source: I, path: impl Into<PathBuf>) -> Self {
-        let line_starts = files::line_starts(source.as_ref()).collect();
+    pub fn new(source: &'src str, path: impl Into<PathBuf>) -> Self {
+        let line_starts = files::line_starts(source).collect();
         Source {
             path: path.into(),
             source,
@@ -86,7 +75,7 @@ impl<I: AsRef<str>> Source<I> {
                 .get(line_index)
                 .cloned()
                 .expect("failed despite previous check")),
-            Ordering::Equal => Ok(self.source.as_ref().len()),
+            Ordering::Equal => Ok(self.source.len()),
             Ordering::Greater => Err(files::Error::LineTooLarge {
                 given: line_index,
                 max: self.line_starts.len() - 1,
@@ -95,19 +84,19 @@ impl<I: AsRef<str>> Source<I> {
     }
 }
 
-impl<'a, I: AsRef<str> + 'a> Files<'a> for Source<I> {
+impl<'a> Files<'a> for Source<'a> {
     type FileId = ();
 
     type Name = Cow<'a, str>;
 
-    type Source = &'a I;
+    type Source = &'a str;
 
     fn name(&'a self, _: Self::FileId) -> Result<Self::Name, codespan_reporting::files::Error> {
         Ok(self.path.as_os_str().to_string_lossy())
     }
 
     fn source(&'a self, _: Self::FileId) -> Result<Self::Source, codespan_reporting::files::Error> {
-        Ok(&self.source)
+        Ok(self.source)
     }
 
     fn line_index(
@@ -129,7 +118,7 @@ impl<'a, I: AsRef<str> + 'a> Files<'a> for Source<I> {
     }
 }
 
-impl<I: AsRef<str>> Debug for Source<I> {
+impl<'src> Debug for Source<'src> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "<Source>")
     }
@@ -139,14 +128,14 @@ impl<I: AsRef<str>> Debug for Source<I> {
 fn peek_test() {
     let source = "Hello, this is a test!";
     let mut cursor = Cursor::new(source);
-    assert_eq!(cursor.peek(), Some('H'));
-    assert_eq!(cursor.peek(), Some('H'));
-    assert_eq!(cursor.next(), Some('H'));
-    assert_eq!(cursor.peek(), Some('e'));
-    assert_eq!(cursor.next(), Some('e'));
-    assert_eq!(cursor.next(), Some('l'));
-    assert_eq!(cursor.next(), Some('l'));
-    assert_eq!(cursor.collect::<String>(), "o, this is a test!".to_owned());
+    assert_eq!(cursor.peek(), Some(b'H'));
+    assert_eq!(cursor.peek(), Some(b'H'));
+    assert_eq!(cursor.next(), Some(b'H'));
+    assert_eq!(cursor.peek(), Some(b'e'));
+    assert_eq!(cursor.next(), Some(b'e'));
+    assert_eq!(cursor.next(), Some(b'l'));
+    assert_eq!(cursor.next(), Some(b'l'));
+    assert_eq!(cursor.collect::<Vec<_>>(), b"o, this is a test!");
 }
 
 #[test]

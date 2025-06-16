@@ -10,7 +10,7 @@ use crate::Source;
 pub struct Span<'src> {
     pub(crate) start: u32,
     pub(crate) end: u32,
-    pub(crate) src: &'src Source<&'src str>,
+    pub(crate) src: &'src Source<'src>,
 }
 
 impl<'src> Span<'src> {
@@ -26,7 +26,8 @@ impl<'src> Span<'src> {
     /// span.grow_front(3);
     /// assert_eq!(span.apply(), "foo");
     /// ```
-    pub fn new(src: &'src Source<&'src str>) -> Self {
+    #[inline]
+    pub fn new(src: &'src Source<'src>) -> Self {
         Self::new_from(src, 0, 0)
     }
 
@@ -41,10 +42,12 @@ impl<'src> Span<'src> {
     /// let span = Span::new_from(&src, 4, 7);
     /// assert_eq!(span.apply(), "bar");
     /// ```
-    pub fn new_from(src: &'src Source<&'src str>, start: u32, end: u32) -> Self {
+    #[inline]
+    pub fn new_from(src: &'src Source<'src>, start: u32, end: u32) -> Self {
         Span { start, end, src }
     }
 
+    #[inline]
     pub(crate) fn update(&mut self) {
         self.start = self.end;
     }
@@ -62,6 +65,7 @@ impl<'src> Span<'src> {
     /// span.grow_front(2);
     /// assert_eq!(span.apply(), "bar");
     /// ```
+    #[inline]
     pub fn grow_front(&mut self, amount: u32) {
         self.end += amount;
     }
@@ -79,6 +83,7 @@ impl<'src> Span<'src> {
     /// span.grow_back(2);
     /// assert_eq!(span.apply(), "bar");
     /// ```
+    #[inline]
     pub fn grow_back(&mut self, amount: u32) {
         self.start -= amount;
     }
@@ -99,6 +104,7 @@ impl<'src> Span<'src> {
     /// span.shrink_back(2);
     /// assert_eq!(span.apply(), "bar");
     /// ```
+    #[inline]
     pub fn shrink_back(&mut self, amount: u32) {
         if self.len() < amount {
             panic!("cannot create negative-size span");
@@ -122,6 +128,7 @@ impl<'src> Span<'src> {
     /// span.shrink_front(2);
     /// assert_eq!(span.apply(), "bar");
     /// ```
+    #[inline]
     pub fn shrink_front(&mut self, amount: u32) {
         if self.len() < amount {
             panic!("cannot create negative-size span");
@@ -140,6 +147,7 @@ impl<'src> Span<'src> {
     /// let span = Span::new_from(&src, 4, 4);
     /// assert!(span.is_empty());
     /// ```
+    #[inline]
     pub fn is_empty(&self) -> bool {
         self.len() == 0
     }
@@ -155,6 +163,7 @@ impl<'src> Span<'src> {
     /// let span = Span::new_from(&src, 4, 6);
     /// assert_eq!(span.len(), 2);
     /// ```
+    #[inline]
     pub fn len(&self) -> u32 {
         self.end - self.start
     }
@@ -182,8 +191,13 @@ impl<'src> Span<'src> {
     /// let span = Span::new_from(&src, 8, 11);
     /// span.apply(); // Panics
     /// ```
+    #[inline]
     pub fn apply(&self) -> &'src str {
-        self.try_apply().expect("span is not contained in file")
+        if cfg!(debug_assertions) {
+            self.try_apply().expect("span is not contained in file")
+        } else {
+            self.apply_unchecked()
+        }
     }
 
     /// Non-panicking version of [`apply`](Span::apply). Instead, it returns a `Some` value if successful.
@@ -209,6 +223,7 @@ impl<'src> Span<'src> {
     /// let src = Source::new(file, "test.txt");
     /// let span = Span::new_from(&src, 8, 11);
     /// assert_eq!(span.try_apply(), None);
+    #[inline]
     pub fn try_apply(&self) -> Option<&'src str> {
         if self.src.source.len() >= self.end as usize {
             Some(self.apply_unchecked())
@@ -217,6 +232,7 @@ impl<'src> Span<'src> {
         }
     }
 
+    #[inline]
     fn apply_unchecked(&self) -> &'src str {
         &self.src.source[self.start as usize..self.end as usize]
     }

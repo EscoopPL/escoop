@@ -30,10 +30,14 @@ pub enum TokenType {
     End,
     /// Comma
     Comma,
-    /// Closing parenthesis
-    CloseParen,
     /// Opening parenthesis
     OpenParen,
+    /// Closing parenthesis
+    CloseParen,
+    /// Opening square bracket
+    OpenBracket,
+    /// Closing square bracket
+    CloseBracket,
     /// Dot/Period
     Dot,
     /// Equals sign
@@ -46,18 +50,20 @@ pub enum TokenType {
     Star,
     /// Slash (/)
     Slash,
+    /// Colon (:)
+    Colon,
 }
 
 /// Represents a value in the lexer that a token might have.
 #[derive(Debug, Clone, PartialEq)]
-pub enum LexerValue {
+pub enum LexerValue<'src> {
     /// String value
-    String(String),
+    String(&'src str),
     /// Numeric value
     Number(f32),
 }
 
-impl Display for LexerValue {
+impl<'src> Display for LexerValue<'src> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             LexerValue::String(val) => write!(f, "{val}"),
@@ -71,7 +77,7 @@ impl Display for LexerValue {
 pub struct Token<'src> {
     token_type: TokenType,
     span: Span<'src>,
-    value: Option<LexerValue>,
+    value: Option<LexerValue<'src>>,
 }
 
 impl<'src> Token<'src> {
@@ -86,7 +92,7 @@ impl<'src> Token<'src> {
     }
 
     /// Gets the value of a token by moving it.
-    pub fn move_value(self) -> Option<LexerValue> {
+    pub fn move_value(self) -> Option<LexerValue<'src>> {
         self.value
     }
 
@@ -117,13 +123,17 @@ impl<'src> Display for Token<'src> {
             TokenType::Minus => write!(f, "-"),
             TokenType::Star => write!(f, "/"),
             TokenType::Slash => write!(f, "*"),
+            TokenType::OpenBracket => write!(f, "["),
+            TokenType::CloseBracket => write!(f, "]"),
+            TokenType::Colon => write!(f, ":"),
         }
     }
 }
 
 macro_rules! make_token {
     ($self:ident, $ty:expr) => {{
-        let span = $self.update_span();
+        let span = $self.span;
+        $self.update_span();
         Some(Token {
             token_type: $ty,
             span,
@@ -131,7 +141,8 @@ macro_rules! make_token {
         })
     }};
     ($self:ident, $ty:expr, $val:expr) => {{
-        let span = $self.update_span();
+        let span = $self.span;
+        $self.update_span();
         Some(Token {
             token_type: $ty,
             span,
@@ -144,14 +155,14 @@ macro_rules! make_token {
 pub struct Lexer<'src> {
     cursor: Cursor<'src>,
     span: Span<'src>,
-    src: Source<&'src str>,
+    src: Source<'src>,
 }
 
 impl<'src> Lexer<'src> {
     /// Creates a new `Lexer`. `new_with_path` should be used instead of `new` if parsing a file,
     /// since `new_with_path` calls [`span::add_file`](crate::span::add_file) in addition to creating
     /// a `Lexer`.
-    pub fn new(src: &'src Source<&'src str>) -> Self {
+    pub fn new(src: &'src Source<'src>) -> Self {
         Lexer {
             src: src.clone(),
             cursor: Cursor::new(src.source),
@@ -159,33 +170,39 @@ impl<'src> Lexer<'src> {
         }
     }
 
-    fn next_char(&mut self) -> Option<char> {
+    #[inline]
+    fn next_char(&mut self) -> Option<u8> {
         let next = self.cursor.next();
         self.span.grow_front(1);
         next
     }
 
-    fn peek_char(&mut self) -> Option<char> {
+    #[inline]
+    fn peek_char(&mut self) -> Option<u8> {
         self.cursor.peek()
     }
 
-    fn update_span(&mut self) -> Span<'src> {
-        let span = self.span;
+    #[inline]
+    fn update_span(&mut self) {
         self.span.update();
-        span
     }
 
+    #[inline]
     fn skip_whitespace(&mut self) {
+        let mut next = 0;
         while let Some(char) = self.peek_char() {
-            if !char.is_whitespace() {
+            if !char.is_ascii_whitespace() {
                 break;
             }
-            self.next_char();
-            self.update_span();
+            self.cursor.next();
+            next += 1;
         }
+        self.span.grow_front(next);
+        self.span.update();
     }
 
     /// Checks if the `Lexer` is at the end of the source.
+    #[inline]
     pub fn eof(&self) -> bool {
         self.cursor.eof()
     }
@@ -201,94 +218,101 @@ impl<'src> Iterator for Lexer<'src> {
         }
 
         match self.next_char().unwrap() {
-            '\'' => {
-                let mut string = String::new();
+            b'\'' => {
                 let mut found = false;
-                while let Some(c) = self.peek_char() {
-                    if c == '\'' {
+                let mut next = 0;
+                for c in self.cursor.by_ref() {
+                    next += 1;
+                    if c == b'\'' {
                         found = true;
                         break;
                     }
-                    if c == '\n' {
+                    if c == b'\n' {
                         break;
                     }
-                    string.push(c);
-                    self.next_char();
                 }
+
+                self.span.grow_front(next);
+
                 if !found {
                     let mut span = self.span;
-                    span.shrink_front(span.len() - 1);
-                    /*DiagBuilder::new(DiagLevel::Fatal)
-                    .message(DiagLevel::Fatal, "unterminated string")
-                    .set_span(self.span)
-                    .finish()
-                    .finish()
-                    .emit();*/
+                    span.shrink_front(1);
                     Diag::error(&self.src)
                         .with_message("unterminated string")
-                        .with_label(Label::primary((), self.span))
+                        .with_label(Label::primary((), span))
                         .finish()
                         .emit();
                 }
-                self.next_char();
+                let mut new_span = self.span;
+                new_span.shrink_back(1); // Remove quotes
+                new_span.shrink_front(1);
+                let string = new_span.apply();
                 make_token!(self, TokenType::StringLit, LexerValue::String(string))
             }
-            '(' => {
+            b'(' => {
                 make_token!(self, TokenType::OpenParen)
             }
-            ')' => {
+            b')' => {
                 make_token!(self, TokenType::CloseParen)
             }
-            ',' => {
+            b',' => {
                 make_token!(self, TokenType::Comma)
             }
-            '.' => {
+            b'.' => {
                 make_token!(self, TokenType::Dot)
             }
-            '=' => {
+            b'=' => {
                 make_token!(self, TokenType::Equals)
             }
-            '+' => {
+            b'+' => {
                 make_token!(self, TokenType::Plus)
             }
-            '-' => {
+            b'-' => {
                 make_token!(self, TokenType::Minus)
             }
-            '*' => {
+            b'*' => {
                 make_token!(self, TokenType::Star)
             }
-            '/' => {
+            b'/' => {
                 make_token!(self, TokenType::Slash)
             }
-            i if i.is_numeric() => {
-                let mut string = i.to_string();
+            b':' => {
+                make_token!(self, TokenType::Colon)
+            }
+            b'[' => {
+                make_token!(self, TokenType::OpenBracket)
+            }
+            b']' => {
+                make_token!(self, TokenType::CloseBracket)
+            }
+            i if i.is_ascii_digit() => {
                 let mut dot = false;
                 while let Some(c) = self.peek_char() {
-                    if !(c.is_numeric() || (c == '.' && !dot)) {
+                    if !(c.is_ascii_digit() || (c == b'.' && !dot)) {
                         break;
                     }
-                    if c == '.' {
+                    if c == b'.' {
                         dot = true;
                     }
-                    string.push(c);
                     self.next_char();
                 }
+                let string = self.span.apply();
                 make_token!(
                     self,
                     TokenType::NumberLit,
                     LexerValue::Number(string.parse().unwrap())
                 )
             }
-            i if i.is_alphabetic() => {
-                let mut string = i.to_string();
+            i if i.is_ascii_alphabetic() => {
                 while let Some(c) = self.peek_char() {
-                    if !c.is_alphanumeric() && c != '-' && c != '_' {
-                        break;
+                    if c.is_ascii_alphanumeric() || c == b'-' || c == b'_' {
+                        self.next_char();
+                        continue;
                     }
-                    string.push(c);
-                    self.next_char();
+                    break;
                 }
-                match string.as_str() {
+                let string = self.span.apply();
+                match string {
                     "identifier" => make_token!(self, TokenType::IdentifierKey),
                     "is" => make_token!(self, TokenType::Is),
                     "end" => make_token!(self, TokenType::End),
@@ -300,7 +324,7 @@ impl<'src> Iterator for Lexer<'src> {
             }
             c => {
                 Diag::error(&self.src)
-                    .with_message(format!("unknown character `{c}`"))
+                    .with_message(format!("unknown character `{}`", c as char))
                     .with_label(Label::primary((), self.span))
                     .finish()
                     .emit();
@@ -321,8 +345,8 @@ fn whitespace_test() {
     lexer.cursor.next();
     lexer.cursor.next(); // '  \nthis is a test.'
     lexer.skip_whitespace();
-    assert_eq!(lexer.cursor.next(), Some('t'));
-    assert_eq!(lexer.cursor.next(), Some('h'));
+    assert_eq!(lexer.cursor.next(), Some(b't'));
+    assert_eq!(lexer.cursor.next(), Some(b'h'));
 }
 
 #[test]
@@ -334,7 +358,7 @@ fn eof_test() {
 
 #[test]
 fn span_test() {
-    let file = "identifier test\n\nidentifier2 test3 test9";
+    let file = "identifier test\n\nidentifier2 test3 test9 2 5 5553";
     let src = Source::new(file, "test.scp");
     let mut lexer = Lexer::new(&src);
     let token = lexer.next().unwrap();
@@ -347,4 +371,10 @@ fn span_test() {
     assert_eq!(token.span().apply(), "test3");
     let token = lexer.next().unwrap();
     assert_eq!(token.span().apply(), "test9");
+    let token = lexer.next().unwrap();
+    assert_eq!(token.span().apply(), "2");
+    let token = lexer.next().unwrap();
+    assert_eq!(token.span().apply(), "5");
+    let token = lexer.next().unwrap();
+    assert_eq!(token.span().apply(), "5553");
 }

@@ -36,12 +36,12 @@ fn set_error() {
 /// Custom Diagnostic message type as a wrapper around [`codespan_reporting::Diagnostic`](Diagnostic)
 pub struct Diag<'src> {
     report: Diagnostic<()>,
-    src: &'src Source<&'src str>,
+    src: &'src Source<'src>,
 }
 
 impl<'src> Diag<'src> {
     /// Creates a [`DiagBuilder`] using the `src` source and a severity of `severity`.
-    pub fn build(src: &'src Source<&'src str>, severity: Severity) -> DiagBuilder<'src> {
+    pub fn build(src: &'src Source<'src>, severity: Severity) -> DiagBuilder<'src> {
         DiagBuilder {
             inner: Diag {
                 report: Diagnostic::new(severity),
@@ -51,27 +51,27 @@ impl<'src> Diag<'src> {
     }
 
     /// Creates a [`DiagBuilder`] using the `src` source and a severity of [`Error`](Severity::Error).
-    pub fn error(src: &'src Source<&'src str>) -> DiagBuilder<'src> {
+    pub fn error(src: &'src Source<'src>) -> DiagBuilder<'src> {
         Self::build(src, Severity::Error)
     }
 
     /// Creates a [`DiagBuilder`] using the `src` source and a severity of [`Warning`](Severity::Warning).
-    pub fn warn(src: &'src Source<&'src str>) -> DiagBuilder<'src> {
+    pub fn warn(src: &'src Source<'src>) -> DiagBuilder<'src> {
         Self::build(src, Severity::Warning)
     }
 
     /// Creates a [`DiagBuilder`] using the `src` source and a severity of [`Bug`](Severity::Bug).
-    pub fn bug(src: &'src Source<&'src str>) -> DiagBuilder<'src> {
+    pub fn bug(src: &'src Source<'src>) -> DiagBuilder<'src> {
         Self::build(src, Severity::Bug)
     }
 
     /// Creates a [`DiagBuilder`] using the `src` source and a severity of [`Help`](Severity::Help).
-    pub fn help(src: &'src Source<&'src str>) -> DiagBuilder<'src> {
+    pub fn help(src: &'src Source<'src>) -> DiagBuilder<'src> {
         Self::build(src, Severity::Help)
     }
 
     /// Creates a [`DiagBuilder`] using the `src` source and a severity of [`Note`](Severity::Note).
-    pub fn note(src: &'src Source<&'src str>) -> DiagBuilder<'src> {
+    pub fn note(src: &'src Source<'src>) -> DiagBuilder<'src> {
         Self::build(src, Severity::Note)
     }
 
