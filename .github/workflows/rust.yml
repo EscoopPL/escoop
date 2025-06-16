@@ -19,17 +19,14 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-      - name: Calculate Hash
-        run: hash=$(sha256sum Cargo.lock | awk '{print $1}')
       - name: Clear unneeded cache
         run: |
-          unusedCacheKeys=$(gh cache list --json key --jq '.[].key|(if endswith("${{ env.hash }}") then null else . end)')
+          unusedCacheKeys=$(gh cache list --json key --jq '.[].key|(if endswith("${{ hashFiles('Cargo.lock') }}") then null else . end)')
 
           set +e
           echo "Deleting caches..."
           for cacheKey in $unusedCacheKeys
           do
-              echo "Deleting cache: $cacheKey"
               gh cache delete $cacheKey
           done
           echo "Done"
@@ -46,8 +43,6 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
-    - name: Calculate Hash
-      run: hash=$(sha256sum Cargo.lock | awk '{print $1}')
     - uses: actions/cache/restore@v4
       with:
         path: |
@@ -56,7 +51,7 @@ jobs:
           ~/.cargo/registry/cache/
           ~/.cargo/git/db/
           target/
-        key: ${{ runner.os }}-${{ runner.arch }}-check-cargo-${{ env.hash }}
+        key: ${{ runner.os }}-${{ runner.arch }}-check-cargo-${{ hashFiles('Cargo.lock') }}
     - name: Install Rust
       run: |
         which cargo || rm -rf $HOME/.rustup | rm -rf $HOME/.cargo | curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
@@ -82,8 +77,6 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
-    - name: Calculate Hash
-      run: hash=$(sha256sum Cargo.lock | awk '{print $1}')
     - uses: actions/cache@v4
       with:
         path: |
@@ -92,7 +85,7 @@ jobs:
           ~/.cargo/registry/cache/
           ~/.cargo/git/db/
           target/
-        key: ${{ runner.os }}-${{ runner.arch }}-${{ matrix.toolchain }}-cargo-${{ env.hash }}
+        key: ${{ runner.os }}-${{ runner.arch }}-${{ matrix.toolchain }}-cargo-${{ hashFiles('Cargo.lock') }}
     - name: Install Rust
       run: |
         which cargo || rm -rf $HOME/.rustup | rm -rf $HOME/.cargo | curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
@@ -126,8 +119,6 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
-    - name: Calculate Hash
-      run: hash=$(sha256sum Cargo.lock | awk '{print $1}')
     - uses: actions/cache@v4
       with:
         path: |
@@ -136,7 +127,7 @@ jobs:
           ~/.cargo/registry/cache/
           ~/.cargo/git/db/
           target/
-        key: ${{ runner.os }}-${{ runner.arch }}-${{ matrix.toolchain }}-cargo-${{ env.hash }}
+        key: ${{ runner.os }}-${{ runner.arch }}-${{ matrix.toolchain }}-cargo-${{ hashFiles('Cargo.lock') }}
     - name: Install Rust
       run: |
         which cargo || rm -rf $HOME/.rustup | rm -rf $HOME/.cargo | curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
@@ -170,8 +161,6 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
-    - name: Calculate Hash
-      run: hash=$(sha256sum Cargo.lock | awk '{print $1}')
     - uses: actions/cache@v4
       with:
         path: |
@@ -180,7 +169,7 @@ jobs:
           ~/.cargo/registry/cache/
           ~/.cargo/git/db/
           target/
-        key: ${{ runner.os }}-${{ runner.arch }}-${{ matrix.toolchain }}-cargo-${{ env.hash }}
+        key: ${{ runner.os }}-${{ runner.arch }}-${{ matrix.toolchain }}-cargo-${{ hashFiles('Cargo.lock') }}
     - name: Install Rust
       run: |
         which cargo || rm -rf $HOME/.rustup | rm -rf $HOME/.cargo | curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
@@ -214,8 +203,6 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
-    - name: Calculate Hash
-      run: hash=$(sha256sum Cargo.lock | awk '{print $1}')
     - uses: actions/cache@v4
       with:
         path: |
@@ -224,7 +211,7 @@ jobs:
           ~/.cargo/registry/cache/
           ~/.cargo/git/db/
           target/
-        key: ${{ runner.os }}-${{ runner.arch }}-${{ matrix.toolchain }}-cargo-${{ env.hash }}
+        key: ${{ runner.os }}-${{ runner.arch }}-${{ matrix.toolchain }}-cargo-${{ hashFiles('Cargo.lock') }}
     - name: Install Rust
       run: |
         which cargo || rm -rf $HOME/.rustup | rm -rf $HOME/.cargo | curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
@@ -258,8 +245,6 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
-    - name: Calculate Hash
-      run: hash=$(sha256sum Cargo.lock | awk '{print $1}')
     - uses: actions/cache@v4
       with:
         path: |
@@ -268,7 +253,7 @@ jobs:
           ~/.cargo/registry/cache/
           ~/.cargo/git/db/
           target/
-        key: ${{ runner.os }}-${{ runner.arch }}-${{ matrix.toolchain }}-cargo-${{ env.hash }}
+        key: ${{ runner.os }}-${{ runner.arch }}-${{ matrix.toolchain }}-cargo-${{ hashFiles('Cargo.lock') }}
     - name: Install Rust
       run: |
         which cargo || rm -rf $HOME/.rustup | rm -rf $HOME/.cargo | curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
@@ -298,8 +283,6 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
-    - name: Calculate Hash
-      run: hash=$(sha256sum Cargo.lock | awk '{print $1}')
     - uses: actions/cache@v4
       with:
         path: |
@@ -308,7 +291,7 @@ jobs:
           ~/.cargo/registry/cache/
           ~/.cargo/git/db/
           target/
-        key: ${{ runner.os }}-${{ runner.arch }}-${{ matrix.toolchain }}-cargo-${{ env.hash }}
+        key: ${{ runner.os }}-${{ runner.arch }}-${{ matrix.toolchain }}-cargo-${{ hashFiles('Cargo.lock') }}
     - name: Install Rust
       run: |
         which cargo || rm -rf $HOME/.rustup | rm -rf $HOME/.cargo | curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
