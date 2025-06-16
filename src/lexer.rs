@@ -87,7 +87,7 @@ impl<'src> Token<'src> {
     }
 
     /// Gets the value of a token by borrowing it.
-    pub fn value(&self) -> &Option<LexerValue> {
+    pub fn value(&self) -> &Option<LexerValue<'src>> {
         &self.value
     }
 

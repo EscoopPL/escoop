@@ -54,7 +54,7 @@ fn main() {
         } else {
             let lexer = Lexer::new(&src);
             for i in lexer {
-                println!("{:?}", i);
+                println!("{i:?}");
             }
         }
     }
@@ -70,7 +70,7 @@ fn main() {
         } else {
             let mut parser = Parser::new(&src);
             for i in parser.parse() {
-                println!("{:?}", i);
+                println!("{i:?}");
             }
         }
     }
