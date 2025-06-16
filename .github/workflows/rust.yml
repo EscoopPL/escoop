@@ -100,7 +100,7 @@ jobs:
       run: cargo test --verbose --release
     - uses: actions/upload-artifact@v4
       with:
-        name: linux-esci-${{ matrix.toolchain }}
+        name: linux-${{ runner.arch }}-esci-${{ matrix.toolchain }}
         path: target/release/esci
 
   build_windows_x86:
@@ -142,7 +142,7 @@ jobs:
       run: cargo test --verbose --release
     - uses: actions/upload-artifact@v4
       with:
-        name: windows-esci-${{ matrix.toolchain }}
+        name: windows-${{ runner.arch }}-esci-${{ matrix.toolchain }}
         path: target/release/esci.exe
   
   build_linux_arm:
@@ -184,7 +184,7 @@ jobs:
       run: cargo test --verbose --release
     - uses: actions/upload-artifact@v4
       with:
-        name: linux-esci-${{ matrix.toolchain }}
+        name: linux-${{ runner.arch }}-esci-${{ matrix.toolchain }}
         path: target/release/esci
 
   build_windows_arm:
@@ -226,7 +226,7 @@ jobs:
       run: $HOME/.cargo/bin/cargo test --verbose --release
     - uses: actions/upload-artifact@v4
       with:
-        name: windows-esci-${{ matrix.toolchain }}
+        name: windows-${{ runner.arch }}-esci-${{ matrix.toolchain }}
         path: target/release/esci.exe
 
   build_macos_silicon:
@@ -268,7 +268,7 @@ jobs:
       run: cargo test --verbose --release
     - uses: actions/upload-artifact@v4
       with:
-        name: macos-silicon-esci-${{ matrix.toolchain }}
+        name: macos-${{ runner.arch }}-esci-${{ matrix.toolchain }}
         path: target/release/esci
 
   build_macos_intel:
@@ -306,5 +306,5 @@ jobs:
       run: cargo test --verbose --release
     - uses: actions/upload-artifact@v4
       with:
-        name: macos-intel-esci-${{ matrix.toolchain }}
+        name: macos-${{ runner.arch }}-esci-${{ matrix.toolchain }}
         path: target/release/esci
