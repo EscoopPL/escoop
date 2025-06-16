@@ -94,9 +94,9 @@ jobs:
       run: |
         rustup default ${{ matrix.toolchain }}
         rustup update ${{ matrix.toolchain }}
-    - name: Build code on Linux
+    - name: Build code on Linux x86
       run: cargo build --verbose --release
-    - name: Run tests on Linux
+    - name: Run tests on Linux x86
       run: cargo test --verbose --release
     - uses: actions/upload-artifact@v4
       with:
@@ -136,9 +136,9 @@ jobs:
       run: |
         rustup default ${{ matrix.toolchain }}
         rustup update ${{ matrix.toolchain }}
-    - name: Build code on Windows
+    - name: Build code on Windows x86
       run: cargo build --verbose --release
-    - name: Run tests on Windows
+    - name: Run tests on Windows x86
       run: cargo test --verbose --release
     - uses: actions/upload-artifact@v4
       with:
@@ -178,9 +178,9 @@ jobs:
       run: |
         rustup default ${{ matrix.toolchain }}
         rustup update ${{ matrix.toolchain }}
-    - name: Build code on Linux
+    - name: Build code on Linux ARM
       run: cargo build --verbose --release
-    - name: Run tests on Linux
+    - name: Run tests on Linux ARM
       run: cargo test --verbose --release
     - uses: actions/upload-artifact@v4
       with:
@@ -218,12 +218,12 @@ jobs:
         export PATH="$HOME/.cargo/bin:$PATH"
     - name: Set toolchain
       run: |
-        rustup default ${{ matrix.toolchain }}
-        rustup update ${{ matrix.toolchain }}
-    - name: Build code on Windows
-      run: cargo build --verbose --release
-    - name: Run tests on Windows
-      run: cargo test --verbose --release
+        $HOME/.cargo/bin/rustup default ${{ matrix.toolchain }}
+        $HOME/.cargo/bin/rustup update ${{ matrix.toolchain }}
+    - name: Build code on Windows ARM
+      run: $HOME/.cargo/bin/cargo build --verbose --release
+    - name: Run tests on Windows ARM
+      run: $HOME/.cargo/bin/cargo test --verbose --release
     - uses: actions/upload-artifact@v4
       with:
         name: windows-esci-${{ matrix.toolchain }}
