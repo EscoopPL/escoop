@@ -1,7 +1,7 @@
 use std::{fs, path::PathBuf};
 
 use clap::{Parser as ClapParser, ValueEnum};
-use escoop::{Source, lexer::Lexer, query::Database};
+use escoop::{Source, lexer::Lexer};
 
 #[derive(ClapParser)]
 struct Args {
@@ -37,9 +37,8 @@ fn main() {
         }
     };
 
-    let mut db = Database::default();
-    let src = Source::new(&mut db, file, "input.scp");
-    let lexer = Lexer::new(&db, src);
+    let src = Source::new(file.as_str(), path);
+    let lexer = Lexer::new(&src);
 
     if matches!(args.debug, Some(DebugMode::Lexer)) {
         for i in lexer {

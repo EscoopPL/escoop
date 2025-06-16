@@ -9,7 +9,7 @@ use codespan_reporting::{
 };
 use termcolor::{ColorChoice, StandardStream};
 
-use crate::{Source, query::Database};
+use crate::Source;
 
 static BUG_FOUND: OnceLock<()> = OnceLock::new();
 
@@ -34,45 +34,45 @@ fn set_error() {
 }
 
 /// Custom Diagnostic message type as a wrapper around [`codespan_reporting::Diagnostic`](Diagnostic)
-pub struct Diag<'db> {
-    report: Diagnostic<Source>,
-    db: &'db Database,
+pub struct Diag<'src> {
+    report: Diagnostic<()>,
+    src: &'src Source<&'src str>,
 }
 
-impl<'db> Diag<'db> {
+impl<'src> Diag<'src> {
     /// Creates a [`DiagBuilder`] using the `src` source and a severity of `severity`.
-    pub fn build(db: &'db Database, severity: Severity) -> DiagBuilder<'db> {
+    pub fn build(src: &'src Source<&'src str>, severity: Severity) -> DiagBuilder<'src> {
         DiagBuilder {
             inner: Diag {
                 report: Diagnostic::new(severity),
-                db,
+                src,
             },
         }
     }
 
     /// Creates a [`DiagBuilder`] using the `src` source and a severity of [`Error`](Severity::Error).
-    pub fn error(db: &'db Database) -> DiagBuilder<'db> {
-        Self::build(db, Severity::Error)
+    pub fn error(src: &'src Source<&'src str>) -> DiagBuilder<'src> {
+        Self::build(src, Severity::Error)
     }
 
     /// Creates a [`DiagBuilder`] using the `src` source and a severity of [`Warning`](Severity::Warning).
-    pub fn warn(db: &'db Database) -> DiagBuilder<'db> {
-        Self::build(db, Severity::Warning)
+    pub fn warn(src: &'src Source<&'src str>) -> DiagBuilder<'src> {
+        Self::build(src, Severity::Warning)
     }
 
     /// Creates a [`DiagBuilder`] using the `src` source and a severity of [`Bug`](Severity::Bug).
-    pub fn bug(db: &'db Database) -> DiagBuilder<'db> {
-        Self::build(db, Severity::Bug)
+    pub fn bug(src: &'src Source<&'src str>) -> DiagBuilder<'src> {
+        Self::build(src, Severity::Bug)
     }
 
     /// Creates a [`DiagBuilder`] using the `src` source and a severity of [`Help`](Severity::Help).
-    pub fn help(db: &'db Database) -> DiagBuilder<'db> {
-        Self::build(db, Severity::Help)
+    pub fn help(src: &'src Source<&'src str>) -> DiagBuilder<'src> {
+        Self::build(src, Severity::Help)
     }
 
     /// Creates a [`DiagBuilder`] using the `src` source and a severity of [`Note`](Severity::Note).
-    pub fn note(db: &'db Database) -> DiagBuilder<'db> {
-        Self::build(db, Severity::Note)
+    pub fn note(src: &'src Source<&'src str>) -> DiagBuilder<'src> {
+        Self::build(src, Severity::Note)
     }
 
     /// Emit the `Diag`
@@ -88,13 +88,13 @@ impl<'src> Drop for Diag<'src> {
         };
         let writer = StandardStream::stdout(ColorChoice::Always);
         let config = codespan_reporting::term::Config::default();
-        term::emit(&mut writer.lock(), &config, self.db, &self.report).expect("bug");
+        term::emit(&mut writer.lock(), &config, self.src, &self.report).expect("bug");
     }
 }
 
 /// A builder for type [`Diag`].
-pub struct DiagBuilder<'db> {
-    inner: Diag<'db>,
+pub struct DiagBuilder<'src> {
+    inner: Diag<'src>,
 }
 
 impl<'src> DiagBuilder<'src> {
@@ -107,7 +107,7 @@ impl<'src> DiagBuilder<'src> {
     }
 
     /// Calls [`codespan_reporting::Diagnostic::with_label`](Diagnostic::with_label)
-    pub fn with_label(mut self, label: Label<Source>) -> Self {
+    pub fn with_label(mut self, label: Label<()>) -> Self {
         let report =
             mem::replace(&mut self.inner.report, Diagnostic::new(Severity::Bug)).with_label(label); // Using a cool mem::replace trick from GitHub Copilot
         self.inner.report = report;
@@ -115,7 +115,7 @@ impl<'src> DiagBuilder<'src> {
     }
 
     /// Calls [`codespan_reporting::Diagnostic::with_labels`](Diagnostic::with_labels)
-    pub fn with_labels(mut self, labels: Vec<Label<Source>>) -> Self {
+    pub fn with_labels(mut self, labels: Vec<Label<()>>) -> Self {
         let report = mem::replace(&mut self.inner.report, Diagnostic::new(Severity::Bug))
             .with_labels(labels); // Using a cool mem::replace trick from GitHub Copilot
         self.inner.report = report;
@@ -123,7 +123,7 @@ impl<'src> DiagBuilder<'src> {
     }
 
     /// Calls [`codespan_reporting::Diagnostic::with_labels_iter`](Diagnostic::with_labels_iter)
-    pub fn with_labels_iter(mut self, labels: impl IntoIterator<Item = Label<Source>>) -> Self {
+    pub fn with_labels_iter(mut self, labels: impl IntoIterator<Item = Label<()>>) -> Self {
         let report = mem::replace(&mut self.inner.report, Diagnostic::new(Severity::Bug))
             .with_labels_iter(labels); // Using a cool mem::replace trick from GitHub Copilot
         self.inner.report = report;

@@ -5,7 +5,7 @@ use std::fmt::Display;
 
 use codespan_reporting::diagnostic::Label;
 
-use crate::{Cursor, Source, diag::Diag, query::Database, span::Span};
+use crate::{Cursor, Source, diag::Diag, span::Span};
 
 /// Enumeration of every possible type of [`Token`]
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -141,23 +141,21 @@ macro_rules! make_token {
 }
 
 /// Escoop lexical analyzer. Turns a source file into tokens.
-pub struct Lexer<'db> {
-    cursor: Cursor<'db>,
-    span: Span<'db>,
-    src: Source,
-    db: &'db Database,
+pub struct Lexer<'src> {
+    cursor: Cursor<'src>,
+    span: Span<'src>,
+    src: Source<&'src str>,
 }
 
-impl<'db> Lexer<'db> {
+impl<'src> Lexer<'src> {
     /// Creates a new `Lexer`. `new_with_path` should be used instead of `new` if parsing a file,
     /// since `new_with_path` calls [`span::add_file`](crate::span::add_file) in addition to creating
     /// a `Lexer`.
-    pub fn new(db: &'db Database, src: Source) -> Self {
+    pub fn new(src: &'src Source<&'src str>) -> Self {
         Lexer {
-            src,
-            cursor: Cursor::new(src.contents(db)),
-            span: Span::new(src.contents(db)),
-            db,
+            src: src.clone(),
+            cursor: Cursor::new(src.source),
+            span: Span::new(src),
         }
     }
 
@@ -171,7 +169,7 @@ impl<'db> Lexer<'db> {
         self.cursor.peek()
     }
 
-    fn update_span(&mut self) -> Span<'db> {
+    fn update_span(&mut self) -> Span<'src> {
         let span = self.span;
         self.span.update();
         span
@@ -226,9 +224,9 @@ impl<'src> Iterator for Lexer<'src> {
                     .finish()
                     .finish()
                     .emit();*/
-                    Diag::error(self.db)
+                    Diag::error(&self.src)
                         .with_message("unterminated string")
-                        .with_label(Label::primary(self.src, self.span))
+                        .with_label(Label::primary((), self.span))
                         .finish()
                         .emit();
                 }
@@ -301,9 +299,9 @@ impl<'src> Iterator for Lexer<'src> {
                 }
             }
             c => {
-                Diag::error(self.db)
+                Diag::error(&self.src)
                     .with_message(format!("unknown character `{c}`"))
-                    .with_label(Label::primary(self.src, self.span))
+                    .with_label(Label::primary((), self.span))
                     .finish()
                     .emit();
                 None
@@ -314,9 +312,8 @@ impl<'src> Iterator for Lexer<'src> {
 
 #[test]
 fn whitespace_test() {
-    let mut db = Database::default();
-    let src = Source::new(&mut db, "Hello,  \nthis is a test.", "test.txt");
-    let mut lexer = Lexer::new(&db, src);
+    let src = Source::new("Hello,  \nthis is a test.", "test.txt");
+    let mut lexer = Lexer::new(&src);
     lexer.cursor.next();
     lexer.cursor.next();
     lexer.cursor.next();
@@ -330,18 +327,16 @@ fn whitespace_test() {
 
 #[test]
 fn eof_test() {
-    let mut db = Database::default();
-    let src = Source::new(&mut db, "", "empty.txt");
-    let mut lexer = Lexer::new(&db, src);
+    let src = Source::new("", "empty.txt");
+    let mut lexer = Lexer::new(&src);
     assert!(lexer.next().is_none());
 }
 
 #[test]
 fn span_test() {
-    let mut db = Database::default();
     let file = "identifier test\n\nidentifier2 test3 test9";
-    let src = Source::new(&mut db, file, "test.scp");
-    let mut lexer = Lexer::new(&db, src);
+    let src = Source::new(file, "test.scp");
+    let mut lexer = Lexer::new(&src);
     let token = lexer.next().unwrap();
     assert_eq!(token.span().apply(), "identifier");
     let token = lexer.next().unwrap();
